@@ -200,7 +200,7 @@ C
 C--READ FLAG INCRCH INDICATING HOW TO READ RECHARGE CONCENTRATION
       READ(IN,'(I10)') INCRCH
 C
-C--IF INCRCH < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
+C--IF INCRCH < 0, CONCENTRATION REUSED FROM LAST STRESS PERIOD
       IF(INCRCH.LT.0) THEN
         WRITE(IOUT,1)
         GOTO 11
@@ -209,7 +209,7 @@ C--IF INCRCH < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
      & ' REUSED FROM LAST STRESS PERIOD')
 C
 C--IF INCRCH >= 0, READ AN ARRAY
-C--CONTAING CONCENTRATION OF RECHARGE FLUX [CRCH]
+C--CONTAINING CONCENTRATION OF RECHARGE FLUX [CRCH]
       WRITE(IOUT,2) KPER
       ANAME='RECH. CONC. COMP. NO.'
       DO INDEX=1,NCOMP
@@ -219,7 +219,7 @@ C--CONTAING CONCENTRATION OF RECHARGE FLUX [CRCH]
     2 FORMAT(/1X,'CONCENTRATION OF RECHARGE FLUXES',
      &           ' WILL BE READ IN STRESS PERIOD',I3)
 C
-C--READ CONCENTRAION OF EVAPOTRANSPIRATION FLUX
+C--READ CONCENTRATION OF EVAPOTRANSPIRATION FLUX
    11 IF(.NOT.FEVT .AND. .NOT.FETS) GOTO 20
 C
       IF(KPER.EQ.1) THEN            
@@ -249,13 +249,13 @@ C
      &           ' WILL BE READ IN STRESS PERIOD',I3)
    20 CONTINUE
 C
-C--READ CONCENTRAION OF UZF FLUX - UZRCH AND GWET
+C--READ CONCENTRATION OF UZF FLUX - UZRCH AND GWET
       IF(.NOT.FUZF) GOTO 39
 C
 C--READ FLAG INCRCH INDICATING HOW TO READ UZF CONCENTRATION
       READ(IN,'(I10)') INCUZF
 C
-C--IF INCUZF < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
+C--IF INCUZF < 0, CONCENTRATION REUSED FROM LAST STRESS PERIOD
       IF(INCUZF.LT.0) THEN
         WRITE(IOUT,22)
         GOTO 29
@@ -264,7 +264,7 @@ C--IF INCUZF < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
      &           ' REUSED FROM LAST STRESS PERIOD')
 C
 C--IF INCUZF >= 0, READ AN ARRAY
-C--CONTAING CONCENTRATION OF UZF-RCH FLUX [CUZRCH]
+C--CONTAINING CONCENTRATION OF UZF-RCH FLUX [CUZRCH]
       WRITE(IOUT,23) KPER
       ANAME='UZRCH CONC. COMP. NO.'
       DO INDEX=1,NCOMP
@@ -281,7 +281,7 @@ C
 C--READ FLAG INCRCH INDICATING HOW TO READ UZF CONCENTRATION
       READ(IN,'(I10)') INCGWET
 C
-C--IF INCGWET < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
+C--IF INCGWET < 0, CONCENTRATION REUSED FROM LAST STRESS PERIOD
       IF(INCGWET.LT.0) THEN
         WRITE(IOUT,32)
         GOTO 39
@@ -290,8 +290,8 @@ C--IF INCGWET < 0, CONCENTRATIN REUSED FROM LAST STRESS PERIOD
      &           ' REUSED FROM LAST STRESS PERIOD')
 C
 C--IF INCGWET >= 0, READ AN ARRAY
-C--CONTAING CONCENTRATION OF GW-ET FLUX [CGWET]
-      WRITE(IOUT,23) KPER
+C--CONTAINING CONCENTRATION OF GW-ET FLUX [CGWET]
+      WRITE(IOUT,33) KPER
       ANAME=' GWET CONC. COMP. NO.'
       DO INDEX=1,NCOMP
         WRITE(ANAME(19:21),'(I3.2)') INDEX
@@ -305,19 +305,6 @@ C
 C--READ AND ECHO POINT SINKS/SOURCES OF SPECIFIED CONCENTRATIONS
       READ(IN,'(I10)') NTMP
 C
-C--RESET ICBUND TO ABS(ICBUND) FOR CONSTANT CONCENTRATION CELLS
-      DO INDEX=1,NCOMP
-        DO KK=1,NLAY
-          DO II=1,NROW
-            DO JJ=1,NCOL
-              IF(ICBUND(JJ,II,KK,INDEX).LT.0) THEN
-                ICBUND(JJ,II,KK,INDEX)=ABS(ICBUND(JJ,II,KK,INDEX))
-              ENDIF
-            ENDDO
-          ENDDO
-        ENDDO
-      ENDDO  
-C
 C--RESET OLD CONCENTRATIONS IF REUSE OPTION NOT IN EFFECT
       IF(KPER.GT.1.AND.NTMP.GE.0) THEN
         DO NUM=1,NSS
@@ -327,6 +314,20 @@ C--RESET OLD CONCENTRATIONS IF REUSE OPTION NOT IN EFFECT
           ENDDO
           KSSZERO=0
         ENDDO
+C
+C-------RESET ICBUND TO ABS(ICBUND) FOR CONSTANT CONCENTRATION CELLS
+        DO INDEX=1,NCOMP
+          DO KK=1,NLAY
+            DO II=1,NROW
+              DO JJ=1,NCOL
+                IF(ICBUND(JJ,II,KK,INDEX).LT.0) THEN
+                  ICBUND(JJ,II,KK,INDEX)=ABS(ICBUND(JJ,II,KK,INDEX))
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO  
+C
       ENDIF
 C
       IF(NTMP.GT.MXSS) THEN
@@ -406,7 +407,7 @@ C
    40 FORMAT(/1X,'POINT SINKS/SOURCES OF SPECIFIED CONCENTRATION',
      &           ' REUSED FROM LAST STRESS PERIOD')
    50 FORMAT(/1X,'NO. OF POINT SINKS/SOURCES OF SPECIFIED',
-     &           ' CONCONCENTRATIONS =',I5,' IN STRESS PERIOD',I3)
+     &           ' CONCENTRATIONS =',I5,' IN STRESS PERIOD',I3)
    60 FORMAT(/5X,'  NO    LAYER   ROW   COLUMN   CONCENTRATION',
      &           '       TYPE            COMPONENT')
    70 FORMAT(3X,4(I5,3X),1X,G15.7,5X,A15,I6)
@@ -553,25 +554,27 @@ C--(RECHARGE)
       DO I=1,NROW
         DO J=1,NCOL
           K=IRCH(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0) THEN
-            N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
-            IF(RECH(J,I).LT.0) THEN
-              IF(UPDLHS) A(N)=A(N)+RECH(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
+          IF(K.GT.0) THEN 
+            IF(ICBUND(J,I,K,ICOMP).GT.0) THEN
+              N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
+              IF(RECH(J,I).LT.0) THEN
+                IF(UPDLHS) A(N)=A(N)+RECH(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
+              ELSE
+                RHS(N)=RHS(N)-RECH(J,I)
+     &                *CRCH(J,I,ICOMP)*DELR(J)*DELC(I)*DH(J,I,K)
+              ENDIF
             ELSE
-              RHS(N)=RHS(N)
-     &              -RECH(J,I)*CRCH(J,I,ICOMP)*DELR(J)*DELC(I)*DH(J,I,K)
-            ENDIF
-          ELSE
-            IF(K.GT.0.AND.ICBUND(J,I,K,ICOMP).EQ.0) THEN
-              IF(DRYON) THEN
-                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
-                IF(RECH(J,I).LT.0) THEN
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-RECH(J,I)*ABS(VOLAQU)
-                ELSE
-                  QC7(J,I,K,7)=QC7(J,I,K,7)-
-     &                         RECH(J,I)*ABS(VOLAQU)*CRCH(J,I,ICOMP)
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-RECH(J,I)*ABS(VOLAQU)
+              IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
+                IF(DRYON) THEN
+                  VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+                  IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
+                  IF(RECH(J,I).LT.0) THEN
+                    QC7(J,I,K,9)=QC7(J,I,K,9)-RECH(J,I)*ABS(VOLAQU)
+                  ELSE
+                    QC7(J,I,K,7)=QC7(J,I,K,7)-
+     &                           RECH(J,I)*ABS(VOLAQU)*CRCH(J,I,ICOMP)
+                    QC7(J,I,K,8)=QC7(J,I,K,8)-RECH(J,I)*ABS(VOLAQU)
+                  ENDIF
                 ENDIF
               ENDIF
             ENDIF
@@ -584,27 +587,29 @@ C--(EVAPOTRANSPIRATION)
       DO I=1,NROW
         DO J=1,NCOL
           K=IEVT(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0) THEN
-            N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
-            IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
-     &               CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
-              IF(UPDLHS) A(N)=A(N)+EVTR(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
-            ELSEIF(CEVT(J,I,ICOMP).GT.0) THEN
-              RHS(N)=RHS(N)-EVTR(J,I)*CEVT(J,I,ICOMP)*DELR(J)*DELC(I)*
-     &               DH(J,I,K)
-            ENDIF
-          ELSE
-            IF(K.GT.0.AND. ICBUND(J,I,K,ICOMP).EQ.0) THEN
-              IF(DRYON) THEN
-                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
-                IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
-     &                CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-EVTR(J,I)*ABS(VOLAQU)
-                ELSEIF(CEVT(J,I,ICOMP).GT.0) THEN
-                  QC7(J,I,K,7)=QC7(J,I,K,7)-EVTR(J,I)*ABS(VOLAQU)*
-     &                         CEVT(J,I,ICOMP)
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-EVTR(J,I)*ABS(VOLAQU)
+          IF(K.GT.0) THEN 
+            IF(ICBUND(J,I,K,ICOMP).GT.0) THEN
+              N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
+              IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
+     &                 CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
+                IF(UPDLHS) A(N)=A(N)+EVTR(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
+              ELSEIF(CEVT(J,I,ICOMP).GT.0) THEN
+                RHS(N)=RHS(N)-EVTR(J,I)*CEVT(J,I,ICOMP)*DELR(J)*DELC(I)*
+     &                 DH(J,I,K)
+              ENDIF
+            ELSE
+              IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
+                IF(DRYON) THEN
+                  VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+                  IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
+                  IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
+     &                  CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
+                    QC7(J,I,K,9)=QC7(J,I,K,9)-EVTR(J,I)*ABS(VOLAQU)
+                  ELSEIF(CEVT(J,I,ICOMP).GT.0) THEN
+                    QC7(J,I,K,7)=QC7(J,I,K,7)-EVTR(J,I)*ABS(VOLAQU)*
+     &                           CEVT(J,I,ICOMP)
+                    QC7(J,I,K,8)=QC7(J,I,K,8)-EVTR(J,I)*ABS(VOLAQU)
+                  ENDIF
                 ENDIF
               ENDIF
             ENDIF
@@ -650,19 +655,23 @@ C-----GWET
             N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
             IF(GWET(J,I).LT.0.AND.(CGWET(J,I,ICOMP).LT.0 .OR. 
      &                 CGWET(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
-              IF(UPDLHS) A(N)=A(N)+GWET(J,I)
+              IF(UPDLHS) A(N)=A(N)+GWET(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
             ELSEIF(CGWET(J,I,ICOMP).GT.0) THEN
               RHS(N)=RHS(N)-GWET(J,I)*CGWET(J,I,ICOMP)
+     1              *DELR(J)*DELC(I)*DH(J,I,K)
             ENDIF
           ELSE
             IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
               IF(DRYON) THEN
+                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+                IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
                 IF(GWET(J,I).LT.0.AND.(CGWET(J,I,ICOMP).LT.0 .OR. 
      &                     CGWET(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)
+                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)*ABS(VOLAQU)
                 ELSEIF(CGWET(J,I,ICOMP).GT.0) THEN
                   QC7(J,I,K,7)=QC7(J,I,K,7)-GWET(J,I)*CGWET(J,I,ICOMP)
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I) 
+     &            *ABS(VOLAQU)
+                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I)*ABS(VOLAQU)
                 ENDIF
               ENDIF
             ENDIF
@@ -677,7 +686,7 @@ C-----SEEPAGE
             CALL NODE2KIJ(N,NLAY,NROW,NCOL,K,I,J)
             IF(ICBUND(J,I,K,ICOMP).LE.0) CYCLE
             GWQOUT=QSNK2UZF(II)
-            IF(GWQOUT.GT.0) THEN                           
+            IF(GWQOUT.LT.0) THEN                           
               IF(UPDLHS) A(N)=A(N)-ABS(GWQOUT) 
             ENDIF
           ENDIF
@@ -710,7 +719,11 @@ C--SKIP 1 LAK ENTRY IN SSM FILE; LAK CONC IS TRANSFERRED IN READGS
 C                                                 
 C--RESET QSS FOR MASS-LOADING SOURCES (IQ=15)        
         IF(IQ.EQ.15) THEN
-          QSS=1./(DELR(J)*DELC(I)*DH(J,I,K))
+          IF(DELR(J)*DELC(I)*DH(J,I,K).LT.1.E-8) THEN
+            QSS=0.
+          ELSE
+            QSS=1./(DELR(J)*DELC(I)*DH(J,I,K))
+          ENDIF
 C
 C--GET AVERAGE CONC FOR LINKED SINK/SOURCE GROUPS (IQ=27)          
         ELSEIF(IQ.EQ.27) THEN
@@ -739,7 +752,7 @@ C
           IF(ICBUND(J,I,K,ICOMP).EQ.0.AND.IQ.GT.0) THEN
             IF(DRYON) THEN
               VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-              IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+              IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
               IF(QSS.LT.0) THEN
                 QC7(J,I,K,9)=QC7(J,I,K,9)-QSS*ABS(VOLAQU)
               ELSE
@@ -772,17 +785,17 @@ C--(RECHARGE)
       DO I=1,NROW
         DO J=1,NCOL
           K=IRCH(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0
-     &              .AND. RECH(J,I).GT.0) THEN
+          IF(K.EQ.0) CYCLE
+          IF(ICBUND(J,I,K,ICOMP).GT.0.AND. RECH(J,I).GT.0) THEN
             N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
             IF(UPDLHS) A(N)=A(N)-RECH(J,I)*DELR(J)*DELC(I)*DH(J,I,K)
             RHS(N)=RHS(N)
-     &            -RECH(J,I)*CUZRCH(J,I,ICOMP)*DELR(J)*DELC(I)*DH(J,I,K)
+     &            -RECH(J,I)*CRCH(J,I,ICOMP)*DELR(J)*DELC(I)*DH(J,I,K)
           ELSE
-            IF(K.GT.0.AND.ICBUND(J,I,K,ICOMP).EQ.0) THEN
+            IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
               IF(DRYON) THEN
                 VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+                IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
                 IF(RECH(J,I).LT.0) THEN
                   QC7(J,I,K,9)=QC7(J,I,K,9)-RECH(J,I)*ABS(VOLAQU)
                 ELSE
@@ -801,7 +814,8 @@ C--(EVAPOTRANSPIRATION)
       DO I=1,NROW
         DO J=1,NCOL
           K=IEVT(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0) THEN
+          IF(K.EQ.0) CYCLE
+          IF(ICBUND(J,I,K,ICOMP).GT.0) THEN
             N=(K-1)*NCOL*NROW+(I-1)*NCOL+J
             IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
      &           CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN 
@@ -812,10 +826,10 @@ C--(EVAPOTRANSPIRATION)
      &               DH(J,I,K)
             ENDIF
           ELSE
-            IF(K.GT.0.AND. ICBUND(J,I,K,ICOMP).EQ.0) THEN
+            IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
               IF(DRYON) THEN
                 VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+                IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
                 IF(EVTR(J,I).LT.0.AND.(CEVT(J,I,ICOMP).LT.0 .OR. 
      &          CEVT(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
                   QC7(J,I,K,9)=QC7(J,I,K,9)-EVTR(J,I)*ABS(VOLAQU)
@@ -867,18 +881,22 @@ C-----GWET
      &               CGWET(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN  
               CYCLE
             ELSEIF(CGWET(J,I,ICOMP).GE.0) THEN  
-              IF(UPDLHS) A(N)=A(N)-GWET(J,I) 
-              RHS(N)=RHS(N)-GWET(J,I)*CGWET(J,I,ICOMP) 
+              IF(UPDLHS) A(N)=A(N)-GWET(J,I)*DELR(J)*DELC(I)*DH(J,I,K) 
+              RHS(N)=RHS(N)-GWET(J,I)*CGWET(J,I,ICOMP)
+     &        *DELR(J)*DELC(I)*DH(J,I,K)
             ENDIF
           ELSE
             IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
               IF(DRYON) THEN
+                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+                IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
                 IF(GWET(J,I).LT.0.AND.(CGWET(J,I,ICOMP).LT.0 .OR. 
      &                      CGWET(J,I,ICOMP).GE.CNEW(J,I,K,ICOMP))) THEN
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)
+                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)*ABS(VOLAQU)
                 ELSEIF(CGWET(J,I,ICOMP).GT.0) THEN
                   QC7(J,I,K,7)=QC7(J,I,K,7)-GWET(J,I)*CGWET(J,I,ICOMP)
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I)
+     &            *ABS(VOLAQU)
+                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I)*ABS(VOLAQU)
                 ENDIF
               ENDIF
             ENDIF
@@ -953,7 +971,7 @@ C--SKIP IF NOT ACTIVE CELL
           IF(ICBUND(J,I,K,ICOMP).EQ.0.AND.IQ.GT.0) THEN
             IF(DRYON) THEN
               VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-              IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+              IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
               IF(QSS.LT.0) THEN
                 QC7(J,I,K,9)=QC7(J,I,K,9)-QSS*ABS(VOLAQU)
               ELSE
@@ -1146,34 +1164,33 @@ C
       DO I=1,NROW
         DO J=1,NCOL
           K=IRCH(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0) THEN
-          CTMP=CRCH(J,I,ICOMP)
-          IF(RECH(J,I).LT.0) CTMP=CNEW(J,I,K,ICOMP)
-          IF(RECH(J,I).GT.0) THEN
-            RMASIO(7,1,ICOMP)=RMASIO(7,1,ICOMP)+RECH(J,I)*CTMP*DTRANS*
-     &                        DELR(J)*DELC(I)*DH(J,I,K)
-          ELSE
-            RMASIO(7,2,ICOMP)=RMASIO(7,2,ICOMP)+RECH(J,I)*CTMP*DTRANS*
-     &                        DELR(J)*DELC(I)*DH(J,I,K)
-          ENDIF
+          IF(K.EQ.0) CYCLE
+          IF(ICBUND(J,I,K,ICOMP).GT.0) THEN
+            CTMP=CRCH(J,I,ICOMP)
+            IF(RECH(J,I).LT.0) CTMP=CNEW(J,I,K,ICOMP)
+            IF(RECH(J,I).GT.0) THEN
+              RMASIO(7,1,ICOMP)=RMASIO(7,1,ICOMP)+RECH(J,I)*CTMP*DTRANS*
+     &                          DELR(J)*DELC(I)*DH(J,I,K)
+            ELSE
+              RMASIO(7,2,ICOMP)=RMASIO(7,2,ICOMP)+RECH(J,I)*CTMP*DTRANS*
+     &                          DELR(J)*DELC(I)*DH(J,I,K)
+            ENDIF
 C        
-          ELSE
-            IF(K.GT.0.AND.ICBUND(J,I,K,ICOMP).EQ.0) THEN
-              IF(DRYON) THEN
-                CTMP=CRCH(J,I,ICOMP)
-                IF(RECH(J,I).LT.0) CTMP=CNEW(J,I,K,ICOMP)
-                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
-                IF(RECH(J,I).LT.0) THEN
-                  RMASIO(7,2,ICOMP)=RMASIO(7,2,ICOMP)+RECH(J,I)*CTMP*
-     &                              DTRANS*ABS(VOLAQU)
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-RECH(J,I)*ABS(VOLAQU)
-                ELSE
-                  RMASIO(7,1,ICOMP)=RMASIO(7,1,ICOMP)+RECH(J,I)*CTMP*
-     &                              DTRANS*ABS(VOLAQU)
-                  QC7(J,I,K,7)=QC7(J,I,K,7)-RECH(J,I)*ABS(VOLAQU)*CTMP
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-RECH(J,I)*ABS(VOLAQU)
-                ENDIF
+          ELSEIF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
+            IF(DRYON) THEN
+              CTMP=CRCH(J,I,ICOMP)
+              IF(RECH(J,I).LT.0) CTMP=CNEW(J,I,K,ICOMP)
+              VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+              IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
+              IF(RECH(J,I).LT.0) THEN
+                RMASIO(7,2,ICOMP)=RMASIO(7,2,ICOMP)+RECH(J,I)*CTMP*
+     &                            DTRANS*ABS(VOLAQU)
+                QC7(J,I,K,9)=QC7(J,I,K,9)-RECH(J,I)*ABS(VOLAQU)
+              ELSE
+                RMASIO(7,1,ICOMP)=RMASIO(7,1,ICOMP)+RECH(J,I)*CTMP*
+     &                            DTRANS*ABS(VOLAQU)
+                QC7(J,I,K,7)=QC7(J,I,K,7)-RECH(J,I)*ABS(VOLAQU)*CTMP
+                QC7(J,I,K,8)=QC7(J,I,K,8)-RECH(J,I)*ABS(VOLAQU)
               ENDIF
             ENDIF
           ENDIF
@@ -1186,44 +1203,43 @@ C
       DO I=1,NROW
         DO J=1,NCOL
           K=IEVT(J,I)
-          IF(K.GT.0 .AND. ICBUND(J,I,K,ICOMP).GT.0) THEN
-          CTMP=CEVT(J,I,ICOMP)
-          IF(EVTR(J,I).LT.0.AND.(CTMP.LT.0 .or.
-     &                           CTMP.GE.CNEW(J,I,K,ICOMP))) THEN
-            CTMP=CNEW(J,I,K,ICOMP)
-          ELSEIF(CTMP.LT.0) THEN        
-            CTMP=0.
-          ENDIF
-          IF(EVTR(J,I).GT.0) THEN
-            RMASIO(8,1,ICOMP)=RMASIO(8,1,ICOMP)+EVTR(J,I)*CTMP*DTRANS*
-     &                        DELR(J)*DELC(I)*DH(J,I,K)
-          ELSE
-            RMASIO(8,2,ICOMP)=RMASIO(8,2,ICOMP)+EVTR(J,I)*CTMP*DTRANS*
-     &                        DELR(J)*DELC(I)*DH(J,I,K)
-          ENDIF
+          IF(K.EQ.0) CYCLE
+          IF(ICBUND(J,I,K,ICOMP).GT.0) THEN
+            CTMP=CEVT(J,I,ICOMP)
+            IF(EVTR(J,I).LT.0.AND.(CTMP.LT.0 .or.
+     &                             CTMP.GE.CNEW(J,I,K,ICOMP))) THEN
+              CTMP=CNEW(J,I,K,ICOMP)
+            ELSEIF(CTMP.LT.0) THEN        
+              CTMP=0.
+            ENDIF
+            IF(EVTR(J,I).GT.0) THEN
+              RMASIO(8,1,ICOMP)=RMASIO(8,1,ICOMP)+EVTR(J,I)*CTMP*DTRANS*
+     &                          DELR(J)*DELC(I)*DH(J,I,K)
+            ELSE
+              RMASIO(8,2,ICOMP)=RMASIO(8,2,ICOMP)+EVTR(J,I)*CTMP*DTRANS*
+     &                          DELR(J)*DELC(I)*DH(J,I,K)
+            ENDIF
 C
-          ELSE
-            IF(K.GT.0.AND. ICBUND(J,I,K,ICOMP).EQ.0) THEN
-              IF(DRYON) THEN
-                CTMP=CEVT(J,I,ICOMP)
-                IF(EVTR(J,I).LT.0.AND.(CTMP.LT.0 .or.
-     &                           CTMP.GE.CNEW(J,I,K,ICOMP))) THEN
-                  CTMP=CNEW(J,I,K,ICOMP)
-                ELSEIF(CTMP.LT.0) THEN        
-                  CTMP=0.
-                ENDIF
-                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-                IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
-                IF(EVTR(J,I).LT.0) THEN
-                  RMASIO(8,2,ICOMP)=RMASIO(8,2,ICOMP)+EVTR(J,I)*CTMP*
-     &                              DTRANS*ABS(VOLAQU)
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-EVTR(J,I)*ABS(VOLAQU)
-                ELSE
-                  RMASIO(8,1,ICOMP)=RMASIO(8,1,ICOMP)+EVTR(J,I)*CTMP*
-     &                              DTRANS*ABS(VOLAQU)
-                  QC7(J,I,K,7)=QC7(J,I,K,7)-EVTR(J,I)*ABS(VOLAQU)*CTMP
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-EVTR(J,I)*ABS(VOLAQU)
-                ENDIF
+          ELSEIF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
+            IF(DRYON) THEN
+              CTMP=CEVT(J,I,ICOMP)
+              IF(EVTR(J,I).LT.0.AND.(CTMP.LT.0 .or.
+     &                         CTMP.GE.CNEW(J,I,K,ICOMP))) THEN
+                CTMP=CNEW(J,I,K,ICOMP)
+              ELSEIF(CTMP.LT.0) THEN        
+                CTMP=0.
+              ENDIF
+              VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+              IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
+              IF(EVTR(J,I).LT.0) THEN
+                RMASIO(8,2,ICOMP)=RMASIO(8,2,ICOMP)+EVTR(J,I)*CTMP*
+     &                            DTRANS*ABS(VOLAQU)
+                QC7(J,I,K,9)=QC7(J,I,K,9)-EVTR(J,I)*ABS(VOLAQU)
+              ELSE
+                RMASIO(8,1,ICOMP)=RMASIO(8,1,ICOMP)+EVTR(J,I)*CTMP*
+     &                            DTRANS*ABS(VOLAQU)
+                QC7(J,I,K,7)=QC7(J,I,K,7)-EVTR(J,I)*ABS(VOLAQU)*CTMP
+                QC7(J,I,K,8)=QC7(J,I,K,8)-EVTR(J,I)*ABS(VOLAQU)
               ENDIF
             ENDIF
           ENDIF
@@ -1283,8 +1299,10 @@ C----GWET
             ENDIF
             IF(GWET(J,I).GT.0) THEN
              RMASIO(54,1,ICOMP)=RMASIO(54,1,ICOMP)+GWET(J,I)*CTMP*DTRANS
+     &       *DELR(J)*DELC(I)*DH(J,I,K)
             ELSE
              RMASIO(54,2,ICOMP)=RMASIO(54,2,ICOMP)+GWET(J,I)*CTMP*DTRANS
+     &       *DELR(J)*DELC(I)*DH(J,I,K)
             ENDIF
           ELSE
             IF(ICBUND(J,I,K,ICOMP).EQ.0) THEN
@@ -1296,15 +1314,17 @@ C----GWET
                 ELSEIF(CTMP.LT.0) THEN        
                   CTMP=0.
                 ENDIF
+                VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
+                IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
                 IF(GWET(J,I).LT.0) THEN
                   RMASIO(54,2,ICOMP)=RMASIO(54,2,ICOMP)+GWET(J,I)*CTMP
-     &                               *DTRANS 
-                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)
+     &                               *DTRANS*ABS(VOLAQU)
+                  QC7(J,I,K,9)=QC7(J,I,K,9)-GWET(J,I)*ABS(VOLAQU)
                 ELSE
                   RMASIO(54,1,ICOMP)=RMASIO(54,1,ICOMP)+GWET(J,I)*CTMP
-     &                               *DTRANS 
-                  QC7(J,I,K,7)=QC7(J,I,K,7)-GWET(J,I)*CTMP
-                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I) 
+     &                               *DTRANS*ABS(VOLAQU)
+                  QC7(J,I,K,7)=QC7(J,I,K,7)-GWET(J,I)*CTMP*ABS(VOLAQU)
+                  QC7(J,I,K,8)=QC7(J,I,K,8)-GWET(J,I)*ABS(VOLAQU)
                 ENDIF
               ENDIF
             ENDIF
@@ -1320,7 +1340,7 @@ C-----SEEPAGE
             IF(ICBUND(J,I,K,ICOMP).LE.0) CYCLE
             GWQOUT=QSNK2UZF(II)
             CTMP=CNEW(J,I,K,ICOMP)
-            IF(GWQOUT.GT.0) THEN                           
+            IF(GWQOUT.LT.0) THEN                           
                 RMASIO(53,2,ICOMP)=RMASIO(53,2,ICOMP)-ABS(GWQOUT)*
      &                             CTMP*DTRANS 
             ENDIF
@@ -1356,7 +1376,11 @@ C--SKIP IF NOT ACTIVE CELL
 C
 C--RESET QSS FOR MASS-LOADING SOURCES (IQ=15)
         IF(IQ.EQ.15) THEN
-          QSS=1./(DELR(J)*DELC(I)*DH(J,I,K))
+          IF(DELR(J)*DELC(I)*DH(J,I,K).LT.1.E-8) THEN
+            QSS=0.
+          ELSE
+            QSS=1./(DELR(J)*DELC(I)*DH(J,I,K))
+          ENDIF
 C
 C--GET AVERAGE CONC FOR LINKED SINK/SOURCE GROUPS (IQ=27)          
         ELSEIF(IQ.EQ.27) THEN
@@ -1398,7 +1422,7 @@ C
           IF(ICBUND(J,I,K,ICOMP).EQ.0.AND.IQ.GT.0) THEN
             IF(DRYON) THEN
               VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-              IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+              IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
               IF(QSS.LT.0) THEN
                 RMASIO(IQ,2,ICOMP)=RMASIO(IQ,2,ICOMP)+QSS*CTMP*DTRANS*
      &                             ABS(VOLAQU)

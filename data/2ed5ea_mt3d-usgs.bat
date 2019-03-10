@@ -2,11 +2,11 @@
 REM Change directory
 cd .\2ED5EAs
 
-REM Generate FTL file using MODFLOW-NWT ver 1.1.0 (or greater)
-..\..\bin\MF_NWT_1.1.1_64.exe  2ED5EA_mf.nam
+REM Generate FTL file using MODFLOW-NWT ver 1.1.4 (or greater)
+..\..\bin\MF_NWT_1.1.4_64.exe  2ED5EA_mf.nam
 
 REM Run MT3D-USGS only after FTL is generated
-..\..\bin\MT3D-USGS_64.exe  2ED5EA_mt.nam
+..\..\bin\MT3D-USGS_64_1.0.1.exe  2ED5EA_mt.nam
 
 ECHO.
 ECHO Run complete. Please press enter when you want to continue.

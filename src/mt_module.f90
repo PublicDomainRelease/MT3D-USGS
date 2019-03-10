@@ -17,7 +17,7 @@
           REAL,    DIMENSION(:), POINTER :: QNGW
           REAL,         ALLOCATABLE      :: PKGFLOWS(:,:),QAREA(:), &
                                             QN2N(:)
-          CHARACTER*20, ALLOCATABLE      :: CFLOWTYPE(:)
+          CHARACTER*16, ALLOCATABLE      :: CFLOWTYPE(:)
           INTEGER,      ALLOCATABLE      :: INOD1(:),INOD2(:),IDISP(:)
           INTEGER,      ALLOCATABLE      :: ICID(:)
           REAL,         ALLOCATABLE      :: QAUX(:)
@@ -27,7 +27,7 @@
           INOD2,IDISP,ICID,QAUX,IP2PFLG)
           REAL,         ALLOCATABLE      :: PKGFLOWS(:,:),QAREA(:), &
                                             QN2N(:)
-          CHARACTER*20, ALLOCATABLE      :: CFLOWTYPE(:)
+          CHARACTER*16, ALLOCATABLE      :: CFLOWTYPE(:)
           INTEGER,      ALLOCATABLE      :: INOD1(:),INOD2(:),IDISP(:)
           INTEGER,      ALLOCATABLE      :: ICID(:)
           REAL,         ALLOCATABLE      :: QAUX(:)
@@ -248,7 +248,8 @@
         REAL,             SAVE, DIMENSION(:),        POINTER :: CFLOINSF
         REAL,             SAVE, DIMENSION(:),        POINTER :: CFLOOUTSF
         REAL,             SAVE, DIMENSION(:),        POINTER :: CGW2SFR
-        REAL,             SAVE, DIMENSION(:),        POINTER :: CUZF2SFR
+        REAL,             SAVE, DIMENSION(:),        POINTER :: CUZF2SFRGW
+        REAL,             SAVE, DIMENSION(:),        POINTER :: CUZF2SFRINF
         REAL,             SAVE, DIMENSION(:),        POINTER :: CGWFROMSFR
         REAL,             SAVE, DIMENSION(:),        POINTER :: CLAK2SFR
         REAL,             SAVE, DIMENSION(:),        POINTER :: CLAKFROMSFR
@@ -304,7 +305,8 @@
         IF(ASSOCIATED(CFLOINSF))    DEALLOCATE(CFLOINSF)
         IF(ASSOCIATED(CFLOOUTSF))   DEALLOCATE(CFLOOUTSF)
         IF(ASSOCIATED(CGW2SFR))     DEALLOCATE(CGW2SFR)
-        IF(ASSOCIATED(CUZF2SFR))    DEALLOCATE(CUZF2SFR)
+        IF(ASSOCIATED(CUZF2SFRGW))    DEALLOCATE(CUZF2SFRGW)
+        IF(ASSOCIATED(CUZF2SFRINF))    DEALLOCATE(CUZF2SFRINF)
         IF(ASSOCIATED(CGWFROMSFR))  DEALLOCATE(CGWFROMSFR)
         IF(ASSOCIATED(CLAK2SFR))    DEALLOCATE(CLAK2SFR)
         IF(ASSOCIATED(CLAKFROMSFR)) DEALLOCATE(CLAKFROMSFR)
@@ -537,7 +539,7 @@ CONTAINS
         INTEGER,PARAMETER :: MXTRNOP=20,MXSTP=9000
         CHARACTER(LEN=4), SAVE, DIMENSION(MXTRNOP) :: NameTRNOP=        &
      &  (/'ADV ', 'DSP ', 'SSM ', 'RCT ', 'GCG ',                       &
-     &    '    ', 'UZT ', '    ', '    ', '    ',                       &
+     &    '    ', 'UZT2', '    ', '    ', '    ',                       &
      &    'TOB ', '    ', 'HSS ', 'TSO ', 'RTR ',                       &
      &    '    ', '    ', 'LKT ', 'SFT ', 'CTS '/)
         INTEGER,          SAVE,                       POINTER :: NCOL      
@@ -759,7 +761,9 @@ CONTAINS
         REAL,             SAVE, DIMENSION(:,:,:,:),   POINTER :: SP1
         REAL,             SAVE, DIMENSION(:,:,:,:),   POINTER :: SP2
         REAL,             SAVE, DIMENSION(:,:,:,:),   POINTER :: RC1
+        DOUBLE PRECISION, SAVE, DIMENSION(:,:,:,:),   POINTER :: FLAM1
         REAL,             SAVE, DIMENSION(:,:,:,:),   POINTER :: RC2
+        DOUBLE PRECISION, SAVE, DIMENSION(:,:,:,:),   POINTER :: FLAM2
 !--RCT
         INTEGER,          SAVE,                       POINTER :: ICTSOUT 
         INTEGER,          SAVE,                       POINTER :: MXCTS   
@@ -840,7 +844,11 @@ CONTAINS
         REAL,             SAVE, DIMENSION(:),         POINTER :: WK
         REAL,             SAVE, DIMENSION(:),         POINTER :: CNCG
         REAL,             SAVE, DIMENSION(:),         POINTER :: RHS
-        INTEGER,          SAVE, DIMENSION(:),         POINTER :: L
+        INTEGER,          SAVE, DIMENSION(19)                 :: L
+        INTEGER,     PARAMETER, DIMENSION(9)                  :: LL = &
+                          (/ 2, 4, 6, 8, 9, 10, 11, 16, 17 /)
+        INTEGER,     PARAMETER, DIMENSION(9)                  :: LU = &
+                          (/ 3, 5, 7, 12, 13, 14, 15, 18, 19 /)
         INTEGER,          SAVE,                       POINTER :: INOCROSS
 !--HSS                                                
         INTEGER,          SAVE,                       POINTER :: MaxHSSSource
@@ -1057,7 +1065,9 @@ CONTAINS
       IF(ASSOCIATED(SP1))          DEALLOCATE(SP1)
       IF(ASSOCIATED(SP2))          DEALLOCATE(SP2)
       IF(ASSOCIATED(RC1))          DEALLOCATE(RC1)
+      IF(ASSOCIATED(FLAM1))      DEALLOCATE(FLAM1)
       IF(ASSOCIATED(RC2))          DEALLOCATE(RC2)
+      IF(ASSOCIATED(FLAM2))      DEALLOCATE(FLAM2)
 !
       IF(ASSOCIATED(MaxConcObs))   DEALLOCATE(MaxConcObs)
       IF(ASSOCIATED(MaxFluxObs))   DEALLOCATE(MaxFluxObs)
@@ -1096,7 +1106,6 @@ CONTAINS
       IF(ASSOCIATED(WK))           DEALLOCATE(WK)
       IF(ASSOCIATED(CNCG))         DEALLOCATE(CNCG)
       IF(ASSOCIATED(RHS))          DEALLOCATE(RHS)
-      IF(ASSOCIATED(L))            DEALLOCATE(L)
 !
       IF(ASSOCIATED(MaxHSSSource)) DEALLOCATE(MaxHSSSource)
       IF(ASSOCIATED(MaxHSSCells))  DEALLOCATE(MaxHSSCells)

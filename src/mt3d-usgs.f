@@ -52,6 +52,7 @@ C unauthorized use.
 C
 C=======================================================================
 C Version history: 09-30-2016 (1.00)
+C                  02-28-2019 (1.0.1)
 C
 C  =====================================================================                                        
 C
@@ -72,7 +73,7 @@ C
      &                         INTSO,INLKT,INSFT,
      &                         IWCTS,IALTFM,NOCREWET,        
      &                         NODES,SAVUCN,NLAY,NROW,NCOL,COLDFLW,
-     &                         IDRY2
+     &                         IDRY2,FLAM1,FLAM2
       USE DSSL
 C
       IMPLICIT  NONE
@@ -199,7 +200,7 @@ C--FOR EACH STRESS PERIOD***********************************************
       NPS=1
       DO KPER=1,NPER
 C
-C--WRITE AN INDENTIFYING MESSAGE
+C--WRITE AN IDENTIFYING MESSAGE
         WRITE(*,50) KPER
         WRITE(IOUT,51) KPER
         WRITE(IOUT,'(1X)')
@@ -224,7 +225,7 @@ C--FOR EACH FLOW TIME STEP----------------------------------------------
           HT1=HT2
           HT2=HT2+DELT    
 C
-C--WRITE AN INDENTIFYING MESSAGE
+C--WRITE AN IDENTIFYING MESSAGE
           WRITE(*,60) KSTP,HT1,HT2
           WRITE(IOUT,61) KSTP,HT1,HT2
           WRITE(IOUT,'(1X)')
@@ -264,7 +265,8 @@ C
 C                                           
           IF(iUnitTRNOP(19).GT.0) THEN      
             CALL FILLIASFJASF()
-            IF(KPER*KSTP.EQ.1) CALL XMD7AR()
+            !IF(KPER*KSTP.EQ.1) CALL XMD7AR()
+            CALL XMD7AR()
           ENDIF                             
 C
 C--CALCULATE COEFFICIENTS THAT VARY WITH FLOW-MODEL TIME STEP
@@ -355,7 +357,7 @@ C--FORMULATE MATRIX COEFFICIENTS
                 IF(iUnitTRNOP(4).GT.0) 
      &           CALL RCT1FM(ICOMP,ICBUND,PRSITY,DH,RHOB,SP1,SP2,SRCONC,
      &                  RC1,RC2,PRSITY2,RETA2,FRAC,DTRANS,
-     &                  COLD,CNEW)                          
+     &                  COLD,CNEW,ITO,FLAM1,FLAM2,RETA)
                 IF(iUnitTRNOP(1).GT.0.AND.MIXELM.LE.0       
      &           .AND. ICOMP.LE.MCOMP .AND. DRYON)
      &           CALL ADVQC1FM(ICOMP)                       

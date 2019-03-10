@@ -181,7 +181,7 @@ C
    40 FORMAT(/1X,'LAKE SINKS/SOURCES OF SPECIFIED CONCENTRATION',
      &           ' REUSED FROM LAST STRESS PERIOD')
    50 FORMAT(/1X,'NO. OF LAKE SINKS/SOURCES OF SPECIFIED',
-     &           ' CONCONCENTRATIONS =',I5,' IN STRESS PERIOD',I3)
+     &           ' CONCENTRATIONS =',I5,' IN STRESS PERIOD',I3)
    60 FORMAT(/5X,' LAKE    BC-TYPE       CONC(1,NCOMP)')
 70    FORMAT( 5X,I5,1X,A10,3X,1000(1X,G15.7))
 C
@@ -809,8 +809,8 @@ C--WRITE LAKE MASS BALANCE TO OUTPUT FILE
      &       16X,'           UZF TO LAKE =',G15.7)
 35    FORMAT(16X,'        STREAM TO LAKE =',G15.7,
      &       16X,'        STREAM TO LAKE =',G15.7)
-40    FORMAT(16X,'         PRECIPIRATION =',G15.7,
-     &       16X,'         PRECIPIRATION =',G15.7)
+40    FORMAT(16X,'         PRECIPITATION =',G15.7,
+     &       16X,'         PRECIPITATION =',G15.7)
 41    FORMAT(16X,'                RUNOFF =',G15.7,
      &       16X,'                RUNOFF =',G15.7)
 43    FORMAT(41X,19('-'),36X,14('-'))

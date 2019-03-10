@@ -35,7 +35,7 @@ C--ALLOCATE
 C
 C--PRINT PACKAGE NAME AND VERSION NUMBER
       WRITE(IOUT,1030) INHSS
- 1030 FORMAT(/1X,'HSS1 -- MT3DMS-HSSM INTERFACE PACAKGE,',
+ 1030 FORMAT(/1X,'HSS1 -- MT3DMS-HSSM INTERFACE PACKAGE,',
      &           ' VERSION 1, MAY 2016, INPUT READ FROM UNIT ',I5)
 C
 C--READ INPUT LINE AS A TEXT STRING
@@ -72,9 +72,9 @@ C--DECODE THE INPUT VARIABLES
 C
 C--ECHO INPUT VARIABLES
       WRITE(IOUT,9) MaxHSSSource,MaxHSSCells,MaxHSSStep
-    9 FORMAT(1X,'MAXIMUM NO. OF HSS SOURCES =',I4,
-     &      /1X,'MAXIMUM NO. OF MODEL CELLS FOR A HSS SOURCE =',I4,
-     &      /1X,'MAXIMUM NO. OF TIME STEPS DEFINING A HSS SOURCE =',I4)
+    9 FORMAT(1X,'MAXIMUM NO. OF HSS SOURCES =',I6,
+     &      /1X,'MAXIMUM NO. OF MODEL CELLS FOR A HSS SOURCE =',I6,
+     &      /1X,'MAXIMUM NO. OF TIME STEPS DEFINING A HSS SOURCE =',I6)
       IF(IHSSGEN.EQ.0) THEN                                  
         WRITE(IOUT,*) 'SOURCE SHAPE IS AN APPROXIMATE CIRCLE'
       ELSEIF(IHSSGEN.EQ.1) THEN                              
@@ -156,7 +156,7 @@ C--ECHO INPUT DATA
    19     FORMAT(/1x,'HSS Source No. ',I4.4,
      &           /1x,'Source Definition File Name: ',a,
      &           /1x,'Source Definition File Read from Unit: ',i4,
-     &           /1x,'Output will be wrtten on Unit: ',i4)
+     &           /1x,'Output will be written on Unit: ',i4)
           IF(IDSSL(N).GT.0) WRITE(IOUT,21) IDSSL(N),IDSSLCOMP(N)
         ELSE
           WRITE(iout,20) n,HSSFileName(1:IFLEN),inHSSFile
@@ -331,7 +331,7 @@ c distribute to multiple cells
           ENDIF
 c                            
           num=0
-          area_total=0	    
+          area_total=0    
           DO i=1,nrow
             DO j=1,ncol
               IF(IHSSGEN.NE.2) THEN       
@@ -485,7 +485,7 @@ C
 C--LOOP over all HSS_LNAPL sources
         DO is=1,nHSSSource               
           IF(MAXDSSL.EQ.0) THEN
-C	  
+C  
             iHSSComp=int(HSSData(4,1,is))
             IF(iHSSComp.ne.ICOMP) CYCLE            
 c           
@@ -652,7 +652,7 @@ C
 c **********************************************************************
 c This SUBROUTINE calculates the portion of a finite-difference cell 
 C that is intersected by a polygon defined in array P of dimension 
-C [nPoint]. The finite-difference cell is discritized into a subgrid
+C [nPoint]. The finite-difference cell is discretized into a subgrid
 C of dimension [nSubgrid] x [nSubgrid].
 c **********************************************************************    
 c
@@ -663,7 +663,7 @@ c
      &          x0,y0,dx,dy
       logical   inside,l1,l2  
       dimension delr(ncol),delc(nrow),xbc(ncol),ybc(nrow), 
-     &		  p(2,npoint),subpoint(2),pmin(2),pmax(2)
+     &          p(2,npoint),subpoint(2),pmin(2),pmax(2)
 c
       pmin(1)=0
       pmin(2)=0
@@ -690,7 +690,7 @@ c
           ENDIF                                                
           IF(l1.and.l2) THEN
             nsub=nsub+1
-	    ENDIF
+          ENDIF
         ENDDO
       ENDDO
       IF(nsub.gt.0) THEN
@@ -709,7 +709,7 @@ C .........................................................
 C This function checks whether a point P1 is inside
 C a polygon defined by a [NP] number of points P.  If yes,
 C the function returns a logical value .TRUE.  Otherwise,
-C it returns .FAUSE.
+C it returns .FALSE.
 C .........................................................
 C
       REAL P,P1,P2,PL1,PL2
@@ -801,7 +801,7 @@ C           PX      - X-COORDINATE OF POINT IN QUESTION.
 C           PY      - Y-COORDINATE OF POINT IN QUESTION.                
 C           XX      - N LONG VECTOR CONTAINING X-COORDINATES OF         
 C                     VERTICES OF POLYGON.                              
-C           YY      - N LONG VECTOR CONTAING Y-COORDINATES OF           
+C           YY      - N LONG VECTOR CONTAINING Y-COORDINATES OF           
 C                     VERTICES OF POLYGON.                              
 C           N       - NUMBER OF VERTICES IN THE POLYGON.                
 C           INOUT   - THE SIGNAL RETURNED:                              

@@ -7,7 +7,7 @@ NOTE: Any use of trade, product, or firm names is for descriptive purposes only
 
 ABSTRACT 
 
-     MT3D-USGS, a U.S. Geological Survey updated releaseof the groundwater  
+     MT3D-USGS, a U.S. Geological Survey updated release of the groundwater  
 solute transport code MT3DMS, includes new transport modeling capabilities 
 to accommodate flow terms calculated by MODFLOW packages that were previously 
 unsupported by MT3DMS and to provide greater flexibility in the simulation 
@@ -16,7 +16,7 @@ and transport within streams and lakes, including solute exchange with
 connected groundwater, are among the new capabilities included in the MT3D-USGS 
 code. MT3D-USGS also includes the capability to route a solute through dry 
 cells that may occur in the Newton-Raphson formulation of MODFLOW (that is,
-MODFLOW-NWT). New chemical reaction Package options include the ability to 
+MODFLOW-NWT). New chemical reaction package options include the ability to 
 simulate interspecies reactions and parent-daughter chain reactions. A new
 pump-and-treat recirculation package enables the simulation of dynamic 
 recirculation with or without treatment for combinations of wells that are 
@@ -47,6 +47,7 @@ code development and expansion.
 
 HISTORY
 
+      MT3D-USGS Version 1.0.1 02/28/2019 - Bug-fix release
       MT3D-USGS Version 1.0.0 09/30/2016 - Initial release. 
 
         

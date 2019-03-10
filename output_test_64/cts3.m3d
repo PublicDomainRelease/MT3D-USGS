@@ -52,7 +52,7 @@
 
  BTN PACKAGE KEYWORD INPUT: 
  DRYCELL OPTION NOT SET
-  DRY CELL BUDGET OMITTED FROM GLAOBAL MASS BALANCE SUMMARY
+  DRY CELL BUDGET OMITTED FROM GLOBAL MASS BALANCE SUMMARY
 
  LAYER NUMBER  AQUIFER TYPE
  ------------  ------------
@@ -183,7 +183,7 @@
 
  NUMBER OF OBSERVATION POINTS =    8
  SAVE CONCENTRATIONS AT OBSERVATION POINTS IN FILES [MT3Dnnn.OBS]
-  FOR EACH SPECIES ON UNITS 401 AND ABOVE, EVERY  1 TRANSPORT STEPS
+  FOR EACH SPECIES ON UNITS   401 AND ABOVE, EVERY    1 TRANSPORT STEPS
  LOCATION OF OBSERVATION POINTS
  ..............................
  NUMBER  LAYER   ROW   COLUMN
@@ -259,7 +259,7 @@
  MAXIMUM NUMBER OF EXTRACTION WELLS =         4
  MAXIMUM NUMBER OF INJECTION WELLS  =         4
  MAXIMUM NUMBER OF WELLS  =         8
- CTS PACKAGE WILL WORK WITH MODFLOW'S WEL PACAKGE
+ CTS PACKAGE WILL WORK WITH MODFLOW'S WEL PACKAGE
 
 
                                    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -451,10 +451,10 @@
                                          CUMULATIVE MASS [M]                                    RATES FOR THIS TIME STEP [M/T]
                                          -------------------                                    ----------------
                 EXTERNAL SOURCE TO CTS =   0.000000                    EXTERNAL SOURCE TO CTS =   0.000000    
-                    GROUNDWATER TO CTS =  0.1543502E+11                    GROUNDWATER TO CTS =  0.1785338E+08
+                    GROUNDWATER TO CTS =  0.1543503E+11                    GROUNDWATER TO CTS =  0.1785339E+08
                     CONC/MASS ADDITION =   0.000000                        CONC/MASS ADDITION =   0.000000    
                                          -------------------                                    ----------------
-                              TOTAL IN =  0.1543502E+11                              TOTAL IN =  0.1785338E+08
+                              TOTAL IN =  0.1543503E+11                              TOTAL IN =  0.1785339E+08
 
                   CTS TO EXTERNAL SINK =   0.000000                      CTS TO EXTERNAL SINK =   0.000000    
                     CTS TO GROUNDWATER =  0.1361002E+11                    CTS TO GROUNDWATER =  0.1585339E+08
@@ -462,8 +462,8 @@
                                          -------------------                                    ----------------
                              TOTAL OUT =  0.1543502E+11                             TOTAL OUT =  0.1785339E+08
 
-                        NET (IN - OUT) =  -1024.000                            NET (IN - OUT) =  -2.000000    
-                 DISCREPANCY (PERCENT) = -0.6634263E-05                 DISCREPANCY (PERCENT) = -0.1120236E-04
+                        NET (IN - OUT) =   3072.000                            NET (IN - OUT) =   0.000000    
+                 DISCREPANCY (PERCENT) =  0.1990279E-04                 DISCREPANCY (PERCENT) =   0.000000    
                                                  NET FLOW (IN - OUT) =   0.000000     [L3/T]
 
 
@@ -554,16 +554,16 @@
                                                              IN                           OUT
                                                       ----------------             ----------------
                                CONSTANT CONCENTRATION:   0.1681810E+11                0.000000    
-                                        CONSTANT HEAD:    0.000000                  -0.6677870E+09
+                                        CONSTANT HEAD:    0.000000                  -0.6677880E+09
                                                 WELLS:    0.000000                    0.000000    
-                                     TREATMENT SYSTEM:   0.1361002E+11              -0.1543502E+11
+                                     TREATMENT SYSTEM:   0.1361002E+11              -0.1543503E+11
                                MASS STOR (FLOW MODEL):    0.000000                    0.000000    
-                                MASS STORAGE (SOLUTE):   0.6054253E+09              -0.1403923E+11
+                                MASS STORAGE (SOLUTE):   0.6054252E+09              -0.1403924E+11
                             ---------------------------------------------------------------------------
-                                              [TOTAL]:   0.3103354E+11   LB         -0.3014203E+11   LB
+                                              [TOTAL]:   0.3103354E+11   LB         -0.3014206E+11   LB
 
-                                                          NET (IN - OUT):   0.8915087E+09
-                                                   DISCREPANCY (PERCENT):    2.914590    
+                                                          NET (IN - OUT):   0.8914862E+09
+                                                   DISCREPANCY (PERCENT):    2.914515    
 
 
                                    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -819,19 +819,19 @@
                                          CUMULATIVE MASS [M]                                    RATES FOR THIS TIME STEP [M/T]
                                          -------------------                                    ----------------
                 EXTERNAL SOURCE TO CTS =   0.000000                    EXTERNAL SOURCE TO CTS =   0.000000    
-                    GROUNDWATER TO CTS =  0.7546307E+11                    GROUNDWATER TO CTS =  0.2238986E+08
+                    GROUNDWATER TO CTS =  0.7546309E+11                    GROUNDWATER TO CTS =  0.2238987E+08
                     CONC/MASS ADDITION =   0.000000                        CONC/MASS ADDITION =   0.000000    
                                          -------------------                                    ----------------
-                              TOTAL IN =  0.7546307E+11                              TOTAL IN =  0.2238986E+08
+                              TOTAL IN =  0.7546309E+11                              TOTAL IN =  0.2238987E+08
 
                   CTS TO EXTERNAL SINK =   0.000000                      CTS TO EXTERNAL SINK =   0.000000    
-                    CTS TO GROUNDWATER =  0.6816307E+11                    CTS TO GROUNDWATER =  0.2038986E+08
+                    CTS TO GROUNDWATER =  0.6816308E+11                    CTS TO GROUNDWATER =  0.2038987E+08
                      CONC/MASS REMOVAL =  0.7300001E+10                     CONC/MASS REMOVAL =   2000000.    
                                          -------------------                                    ----------------
-                             TOTAL OUT =  0.7546307E+11                             TOTAL OUT =  0.2238986E+08
+                             TOTAL OUT =  0.7546307E+11                             TOTAL OUT =  0.2238987E+08
 
-                        NET (IN - OUT) =   0.000000                            NET (IN - OUT) =   0.000000    
-                 DISCREPANCY (PERCENT) =   0.000000                     DISCREPANCY (PERCENT) =   0.000000    
+                        NET (IN - OUT) =   16384.00                            NET (IN - OUT) =   0.000000    
+                 DISCREPANCY (PERCENT) =  0.2171128E-04                 DISCREPANCY (PERCENT) =   0.000000    
                                                  NET FLOW (IN - OUT) =   0.000000     [L3/T]
 
 
@@ -922,16 +922,16 @@
                                                              IN                           OUT
                                                       ----------------             ----------------
                                CONSTANT CONCENTRATION:   0.7580937E+11                0.000000    
-                                        CONSTANT HEAD:    0.000000                  -0.2916454E+11
+                                        CONSTANT HEAD:    0.000000                  -0.2916462E+11
                                                 WELLS:    0.000000                    0.000000    
-                                     TREATMENT SYSTEM:   0.6816307E+11              -0.7546307E+11
+                                     TREATMENT SYSTEM:   0.6816308E+11              -0.7546309E+11
                                MASS STOR (FLOW MODEL):    0.000000                    0.000000    
-                                MASS STORAGE (SOLUTE):   0.2698833E+10              -0.4134193E+11
+                                MASS STORAGE (SOLUTE):   0.2698836E+10              -0.4134205E+11
                             ---------------------------------------------------------------------------
-                                              [TOTAL]:   0.1466713E+12   LB         -0.1459695E+12   LB
+                                              [TOTAL]:   0.1466713E+12   LB         -0.1459698E+12   LB
 
-                                                          NET (IN - OUT):   0.7017431E+09
-                                                   DISCREPANCY (PERCENT):   0.4795934    
+                                                          NET (IN - OUT):   0.7015301E+09
+                                                   DISCREPANCY (PERCENT):   0.4794475    
   ----- 
  | M T |
  | 3 D | END OF MODEL OUTPUT

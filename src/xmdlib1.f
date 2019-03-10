@@ -72,9 +72,9 @@ c
 
       module xmdmatrix
 
-!     icolour()        nn       poiter array for red-black ordered matrix
+!     icolour()        nn       pointer array for red-black ordered matrix
 !     RBorder()       nn        Red-Black ordering vector
-!     iblackend()       nn      end markder for black nodes in a row
+!     iblackend()       nn      end marker for black nodes in a row
 !     iaf()        nblack+1     YSMP array for factored matrix
 !     jaf()         njaf        YSMP array for factored matrix                   
 !     idiagf()     nblack       diagonal location for factored matrix
@@ -218,7 +218,8 @@ c      new fill-in caused by red node elimination -> level = 1
 
         first = jafwk(itemp+1)
         do ii = itemp+1, iend-1
-          list(jafwk(ii)) = jafwk(ii+1)   ! link list containing next column number
+          ! link list containing next column number
+          list(jafwk(ii)) = jafwk(ii+1)
         enddo
         list(jafwk(iend)) = n+1         ! end marker
 
@@ -335,7 +336,7 @@ c       ierr           error flag
 c     temporary:
 c       row()          real temp work array
 c       list()         integer temp work array
-c       levptr()       integer temp work array and devide this as
+c       levptr()       integer temp work array and divide this as
 c                      [njaf][n]
 c                       ^^^^  ^
 c                [level in af][level in row i]
@@ -461,7 +462,8 @@ c      new fill-in caused by red node elimination -> level = 1
 
         first = jafwk(itemp+1)
         do ii = itemp+1, iend-1
-          list(jafwk(ii)) = jafwk(ii+1)   ! link list containing next column number
+          ! link list containing next column number
+          list(jafwk(ii)) = jafwk(ii+1)
         enddo
         list(jafwk(iend)) = n+1         ! end marker
 
@@ -672,7 +674,7 @@ c
       integer :: icolour(neq), RBorder(neq), iblackend(neq)
       logical :: redcdsys
 c
-c     locall variables
+c     local variables
 c
       integer :: ibf, nred, ii, idf, i, iHalf, iBlack,iRed, ierror, k
       integer, allocatable, dimension(:) :: ilist
@@ -683,7 +685,7 @@ c
       nred = 0
       nblack = 0
 c
-c  determine red or black nodes accoring to their connections
+c  determine red or black nodes according to their connections
 c
 c     ilist(ibk) = 0 : undetermined
 c                = 1 : red node
@@ -712,7 +714,8 @@ c
 c  check ibf's neighbour, 
 
           do ii = ia(ibf), ia(ibf+1)-1
-            if (ilist( ja(ii) ) == 1) then ! found a red node in neighbour. ibf should be a black node
+            if (ilist( ja(ii) ) == 1) then
+              !found a red node in neighbour. ibf should be a black node
               call xmdBlackCounter(icolour, RBorder, neq, nblack, ibf)
               cycle
             endif
@@ -732,7 +735,7 @@ c    count red node
 
           nred = nred + 1
           icolour(ibf) = -nred  ! negative # for red node
-          RBorder( neq +1 -nred) = ibf  ! store red node info into RBorder
+          RBorder( neq +1 -nred) = ibf !store red node info into RBorder
 
         enddo
 
@@ -1430,7 +1433,7 @@ c
       row(1:nblack) = 0.0d0
       list(1:nblack) = 0
 c
-c     perform red-black elimination and actural numerical factorization
+c     perform red-black elimination and actual numerical factorization
 c
 c   /                 \ /    \   /    \           /                 \ /    \   /    \
 c   |        :        | |    |   |    | eliminate |        :        | |    |   |    |
@@ -1469,7 +1472,8 @@ c              perform red nodes elimination
           do kk = ia(id)+1, ia(id+1)-1
             idk = ja(kk)
             idkk = icolour(idk)
-            row(idkk) = row(idkk) - a(ii) * a(kk) / a( ia(id) )  ! Abr Dr^{-1} Arb  in (1)
+            row(idkk) = row(idkk) - a(ii) * a(kk) / a( ia(id) )
+            ! Abr Dr^{-1} Arb  in (1)
           enddo
 
 c      modify {b}       Bb - Abr Dr^{-1} Br`    in (2)
@@ -1567,7 +1571,7 @@ c       total    2*nblack + 2*(north+1)*nblack + north
       if (ierror /= 0) stop "== not enough memory (xmdorthmn) =="
 
 c
-c     intilaize all vectors
+c     initialize all vectors
 c
       k = (north+1)*nblack
       do i = 1, k
@@ -1727,7 +1731,7 @@ c             REDorder(1:nred)   red node pointer
 c                 original_node_number = REDorder(red_node_number)
 c
 c      output:
-c             amltx()         mulitiplication of [a]{x}in reduced system, i.e., [Abb']{Xb}
+c             amltx()         multiplication of [a]{x}in reduced system, i.e., [Abb']{Xb}
 c
       implicit none
       integer :: n, nja, nblack, nred, ia(n+1), ja(nja),
@@ -1775,7 +1779,7 @@ c                  = Abb_{diag} * Xb + ( Abb Abr )_{off_diag} * { Xr+Xb }
 
         iold = RBorder(iblck)
 
-c     obatain Abb_{diag} * Xb
+c     obtain Abb_{diag} * Xb
         amltx(iblck) = xx(iold) * a( ia(iold) )
 
 c     calculate  ( Abb Abr )_{off_diag} * { Xr+Xb } and add to the above
@@ -1906,19 +1910,19 @@ c      idiagf           points to diagonal of af array,
 c                       i.e. af( idiag( i) ) is the
 c                       diagonal element of U, assuming
 c                       A = LU, where L is unit lower triangular
-c      north            number of orthogonalizaion
+c      north            number of orthogonalization
 c
 c      invord           inverse of lorder:  invord( lorder(i) ) = i
 c
 c      lorder           ordering vector: lorder( new_order ) = old_order
 c      n                number of unknowns
-c      nitmax           max numvber of iterations
+c      nitmax           max number of iterations
 c      nja              size of ja, a, arrays
 c      njaf             size of jaf, af arrays
 c      q                search vector
 c      aqaq             product of aq and aq
 c      res              residual
-c      rwork            temporary n-length vector wkspace
+c      rwork            temporary n-length vector work space
 c      v                (LU)^{-1} r^{k}
 c      x                solution (original ordering)
 c
@@ -2160,6 +2164,10 @@ c
       integer ierror
 
 
+      if(allocated(icolour)) deallocate(icolour)
+      if(allocated(RBorder)) deallocate(RBorder)
+      if(allocated(iblackend)) deallocate(iblackend)
+      if(allocated(lorder)) deallocate(lorder)
       allocate(icolour(nn), RBorder(nn), iblackend(nn), lorder(nn),
      [         stat = ierror )
       if (ierror /= 0) stop "== not enough memory (xmdprpc) =="
@@ -2188,6 +2196,8 @@ c
       call xmdRedBlack(ia, ja, lorder, icolour, RBorder,
      [               iblackend, nn, nja, nblack, ierr, redsys)
 
+      if(allocated(iaf)) deallocate(iaf)
+      if(allocated(idiagf)) deallocate(idiagf)
       allocate(iaf(nblack+1), idiagf(nblack), stat = ierror )
       if (ierror /= 0) stop "== not enough memory (xmdprpc - af) =="
 
@@ -2374,7 +2384,7 @@ c
      [        '  column number which does not have symmetric part:',
      [        i5)
 c
-c     check red-black ordering connectoins
+c     check red-black ordering connections
 c
       blacknodes: do iblck = 1, nblack
         iold = RBorder(iblck)
@@ -2716,7 +2726,7 @@ c
 c     output parameters -
 c        deg - array containing the degrees of the nodes in
 c              the component.
-c        ccsize-size of the component specifed by mask and root
+c        ccsize-size of the component specified by mask and root
 c
 c     working parameter -
 c        ls - a temporary vector used to store the nodes of the

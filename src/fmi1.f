@@ -1,3 +1,10 @@
+      MODULE FLOWFILE
+        IMPLICIT NONE
+        PUBLIC
+        SAVE
+        INTEGER :: m_readDbl ! 0- don't know, 1- single, 2- double
+      END MODULE FLOWFILE
+C
 C
       SUBROUTINE FMI1AR()
 C **********************************************************************
@@ -5,20 +12,24 @@ C THIS SUBROUTINE CHECKS FLOW-TRANSPORT LINK FILE AND ALLOCATES SPACE
 C FOR ARRAYS THAT MAY BE NEEDED BY FLOW MODEL-INTERFACE (FMI) PACKAGE.
 C **********************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: INFTL,IOUT,MXTRNOP,iUnitTRNOP,NPERFL,ISS,
      &                         IVER,IFTLFMT,NPERFL,ISS,IVER,FWEL,FDRN,
      &                         FRCH,FEVT,FRIV,FGHB,FSTR,FRES,FFHB,FIBS,
      &                         FTLK,FLAK,FMNW,FDRT,FETS,FSWT,FSFR,FUZF,
      &                         NPCKGTXT,FLAKFLOWS,FMNWFLOWS,FSFRFLOWS,
      &                         FUZFFLOWS,FSWR,FSWRFLOWS,FSFRLAK,FSFRUZF,
-     &                         FLAKUZF,FSNKUZF
+     &                         FLAKUZF,FSNKUZF,NROW,NCOL,NLAY,BUFF
       USE SFRVARS, ONLY: ISFTTR
       IMPLICIT     NONE
       INTEGER      MTWEL,MTDRN,MTRCH,MTEVT,MTRIV,MTGHB,MTCHD,
      &             MTSTR,MTFHB,MTRES,MTTLK,MTIBS,MTLAK,
-     &             MTDRT,MTETS,MTMNW,MTSWT,MTSFR,MTUZF,IERR,IPCKG
-      CHARACTER    VERSION*11
+     &             MTDRT,MTETS,MTMNW,MTSWT,MTSFR,MTUZF,IERR,IPCKG,
+     &             I,J,K,NR,NC,NL,KKSTP,KPER,KKPER
+      CHARACTER    VERSION*11,LABEL*16
       CHARACTER*20 TEXT1
+      REAL*8, ALLOCATABLE :: arrDbl(:,:,:)
+      LOGICAL      OK2EXIT
 C
 C--PRINT PACKAGE NAME AND VERSION NUMBER
       WRITE(IOUT,1030) INFTL
@@ -32,210 +43,292 @@ C--ALLOCATE
      &         FUZFFLOWS,FSWR,FSWRFLOWS,FSFRLAK,FSFRUZF,FLAKUZF,FSNKUZF)
 C
 C--INITIALIZE
-      ISS=1
-      NPERFL=0
-      IVER=2
-      VERSION=' '
-      FWEL=.FALSE.
-      FDRN=.FALSE.
-      FRCH=.FALSE.
-      FEVT=.FALSE.
-      FRIV=.FALSE.
-      FGHB=.FALSE.
-      FSTR=.FALSE.
-      FRES=.FALSE.
-      FFHB=.FALSE.
-      FIBS=.FALSE.
-      FTLK=.FALSE.
-      FLAK=.FALSE.
-      FMNW=.FALSE.
-      FDRT=.FALSE.
-      FETS=.FALSE.
-      FSWT=.FALSE.
-      FSFR=.FALSE.
-      FUZF=.FALSE.
-      FLAKFLOWS=.FALSE.
-      FMNWFLOWS=.FALSE.
-      FSFRFLOWS=.FALSE.
-      FUZFFLOWS=.FALSE.
-      FSWR=.FALSE.
-      FSWRFLOWS=.FALSE.
-      FSFRLAK=.FALSE.
-      FSFRUZF=.FALSE.
-      FLAKUZF=.FALSE.
-      FSNKUZF=.FALSE.
-      MTSTR=0
-      MTRES=0
-      MTFHB=0
-      MTDRT=0
-      MTETS=0
-      MTTLK=0
-      MTIBS=0
-      MTLAK=0
-      MTMNW=0
-      MTSWT=0
-      MTSFR=0
-      MTUZF=0
+      m_readDbl=0
+      OK2EXIT=.FALSE.
+      DO
+        ISS=1
+        NPERFL=0
+        IVER=2
+        VERSION=' '
+        FWEL=.FALSE.
+        FDRN=.FALSE.
+        FRCH=.FALSE.
+        FEVT=.FALSE.
+        FRIV=.FALSE.
+        FGHB=.FALSE.
+        FSTR=.FALSE.
+        FRES=.FALSE.
+        FFHB=.FALSE.
+        FIBS=.FALSE.
+        FTLK=.FALSE.
+        FLAK=.FALSE.
+        FMNW=.FALSE.
+        FDRT=.FALSE.
+        FETS=.FALSE.
+        FSWT=.FALSE.
+        FSFR=.FALSE.
+        FUZF=.FALSE.
+        FLAKFLOWS=.FALSE.
+        FMNWFLOWS=.FALSE.
+        FSFRFLOWS=.FALSE.
+        FUZFFLOWS=.FALSE.
+        FSWR=.FALSE.
+        FSWRFLOWS=.FALSE.
+        FSFRLAK=.FALSE.
+        FSFRUZF=.FALSE.
+        FLAKUZF=.FALSE.
+        FSNKUZF=.FALSE.
+        MTSTR=0
+        MTRES=0
+        MTFHB=0
+        MTDRT=0
+        MTETS=0
+        MTTLK=0
+        MTIBS=0
+        MTLAK=0
+        MTMNW=0
+        MTSWT=0
+        MTSFR=0
+        MTUZF=0
 C
 C--READ HEADER OF FLOW-TRANSPORT LINK FILE
-      IF(IFTLFMT.EQ.0) THEN
-        READ(INFTL,ERR=100,IOSTAT=IERR) VERSION,MTWEL,MTDRN,MTRCH,MTEVT,
-     &                                  MTRIV,MTGHB,MTCHD,ISS,NPERFL
-      ELSEIF(IFTLFMT.EQ.1) THEN
-        READ(INFTL,*,ERR=100,IOSTAT=IERR) VERSION,MTWEL,MTDRN,MTRCH,
-     &                                    MTEVT,MTRIV,MTGHB,MTCHD,ISS,
-     &                                    NPERFL
-      ENDIF
-C
-  100 IF((VERSION(1:4).NE.'MT3D'.AND.VERSION(1:4).NE.'MTGS').OR.
-     &   IERR.NE.0) THEN
-        GOTO 500
-      ELSEIF(VERSION(1:11).EQ.'MT3D4.00.00') THEN
-        REWIND(INFTL)
         IF(IFTLFMT.EQ.0) THEN
-          READ(INFTL) VERSION,MTWEL,MTDRN,MTRCH,MTEVT,MTRIV,MTGHB, 
-     &                MTCHD,ISS,NPERFL,MTSTR,MTRES,MTFHB,MTDRT,MTETS,
-     &                MTTLK,MTIBS,MTLAK,MTMNW,MTSWT,MTSFR,MTUZF
+          READ(INFTL,ERR=100,IOSTAT=IERR) VERSION,MTWEL,MTDRN,MTRCH,
+     &                                    MTEVT,MTRIV,MTGHB,MTCHD,ISS,
+     &                                    NPERFL    
         ELSEIF(IFTLFMT.EQ.1) THEN
-          READ(INFTL,*) VERSION,MTWEL,MTDRN,MTRCH,MTEVT,MTRIV,MTGHB,
+          READ(INFTL,*,ERR=100,IOSTAT=IERR) VERSION,MTWEL,MTDRN,MTRCH,
+     &                                      MTEVT,MTRIV,MTGHB,MTCHD,ISS,
+     &                                      NPERFL
+        ENDIF
+C       
+  100   IF((VERSION(1:4).NE.'MT3D'.AND.VERSION(1:4).NE.'MTGS').OR.
+     &     IERR.NE.0) THEN
+          GOTO 500
+        ELSEIF(VERSION(1:11).EQ.'MT3D4.00.00') THEN
+          REWIND(INFTL)
+          IF(IFTLFMT.EQ.0) THEN
+            READ(INFTL) VERSION,MTWEL,MTDRN,MTRCH,MTEVT,MTRIV,MTGHB, 
      &                  MTCHD,ISS,NPERFL,MTSTR,MTRES,MTFHB,MTDRT,MTETS,
      &                  MTTLK,MTIBS,MTLAK,MTMNW,MTSWT,MTSFR,MTUZF
-        ENDIF
-      ELSEIF(VERSION(1:11).EQ.'MTGS1.00.00') THEN
-        IF(IFTLFMT.EQ.0) THEN
-          READ(INFTL) NPCKGTXT
-        ELSEIF(IFTLFMT.EQ.1) THEN
-          READ(INFTL,*) NPCKGTXT
-        ENDIF
-        DO IPCKG=1,NPCKGTXT
-          IF(IFTLFMT.EQ.0) THEN
-            READ(INFTL) TEXT1
           ELSEIF(IFTLFMT.EQ.1) THEN
-            READ(INFTL,*) TEXT1
+            READ(INFTL,*) VERSION,MTWEL,MTDRN,MTRCH,MTEVT,MTRIV,MTGHB,
+     &                    MTCHD,ISS,NPERFL,MTSTR,MTRES,MTFHB,MTDRT,
+     &                    MTETS,MTTLK,MTIBS,MTLAK,MTMNW,MTSWT,MTSFR,
+     &                    MTUZF
           ENDIF
-C
-          IF(TEXT1.EQ.'                 STR') FSTR=.TRUE.
-          IF(TEXT1.EQ.'                 RES') FRES=.TRUE.
-          IF(TEXT1.EQ.'                 FHB') FFHB=.TRUE.
-          IF(TEXT1.EQ.'                 DRT') FDRT=.TRUE.
-          IF(TEXT1.EQ.'                 ETS') FETS=.TRUE.
-          IF(TEXT1.EQ.'                 IBS') FIBS=.TRUE.
-          IF(TEXT1.EQ.'                 TLK') FTLK=.TRUE.
-          IF(TEXT1.EQ.'                 LAK') FLAK=.TRUE. 
-          IF(TEXT1.EQ.'           LAK FLOWS') FLAKFLOWS=.TRUE.
-          IF(TEXT1.EQ.'                 MNW') FMNW=.TRUE.
-          IF(TEXT1.EQ.'           MNW FLOWS') FMNWFLOWS=.TRUE. !NOT SUPPORTED YET
-          IF(TEXT1.EQ.'                 SWT') FSWT=.TRUE.
-          IF(TEXT1.EQ.'                 SFR') FSFR=.TRUE.
-          IF(TEXT1.EQ.'        SFR FLOWS SS' .OR.
-     1       TEXT1.EQ.'        SFR FLOWS TR') THEN
-            FSFRFLOWS=.TRUE.
-            IF(TEXT1.EQ.'        SFR FLOWS SS') ISFTTR=0
-            IF(TEXT1.EQ.'        SFR FLOWS TR') ISFTTR=1
+        ELSEIF(VERSION(1:11).EQ.'MTGS1.00.00') THEN
+          IF(IFTLFMT.EQ.0) THEN
+            READ(INFTL) NPCKGTXT
+          ELSEIF(IFTLFMT.EQ.1) THEN
+            READ(INFTL,*) NPCKGTXT
           ENDIF
-          IF(TEXT1.EQ.'                 UZF') FUZF=.TRUE.
-          IF(TEXT1.EQ.'           UZF FLOWS') FUZFFLOWS=.TRUE.
-          IF(TEXT1.EQ.'                 SWR') FSWR=.TRUE.
-          IF(TEXT1.EQ.'           SWR FLOWS') FSWRFLOWS=.TRUE. !NOT SUPPORTED YET
-          IF(TEXT1.EQ.'     CONNECT SFR LAK') FSFRLAK=.TRUE.
-          IF(TEXT1.EQ.'     CONNECT SFR UZF') FSFRUZF=.TRUE.
-          IF(TEXT1.EQ.'     CONNECT LAK UZF') FLAKUZF=.TRUE.
-          IF(TEXT1.EQ.'     CONNECT SNK UZF') FSNKUZF=.TRUE.
-        ENDDO
-      ENDIF
+          DO IPCKG=1,NPCKGTXT
+            IF(IFTLFMT.EQ.0) THEN
+              READ(INFTL) TEXT1
+            ELSEIF(IFTLFMT.EQ.1) THEN
+              READ(INFTL,*) TEXT1
+            ENDIF
+C       
+            !NSY: NOT SUPPORTED YET
+            IF(TEXT1.EQ.'                 STR') FSTR=.TRUE.
+            IF(TEXT1.EQ.'                 RES') FRES=.TRUE.
+            IF(TEXT1.EQ.'                 FHB') FFHB=.TRUE.
+            IF(TEXT1.EQ.'                 DRT') FDRT=.TRUE.
+            IF(TEXT1.EQ.'                 ETS') FETS=.TRUE.
+            IF(TEXT1.EQ.'                 IBS') FIBS=.TRUE.
+            IF(TEXT1.EQ.'                 TLK') FTLK=.TRUE.
+            IF(TEXT1.EQ.'                 LAK') FLAK=.TRUE. 
+            IF(TEXT1.EQ.'           LAK FLOWS') FLAKFLOWS=.TRUE.
+            IF(TEXT1.EQ.'                 MNW') FMNW=.TRUE.
+            IF(TEXT1.EQ.'           MNW FLOWS') FMNWFLOWS=.TRUE. !NSY
+            IF(TEXT1.EQ.'                 SWT') FSWT=.TRUE.
+            IF(TEXT1.EQ.'                 SFR') FSFR=.TRUE.
+            IF(TEXT1.EQ.'        SFR FLOWS SS' .OR.
+     1         TEXT1.EQ.'        SFR FLOWS TR') THEN
+              FSFRFLOWS=.TRUE.
+              IF(TEXT1.EQ.'        SFR FLOWS SS') ISFTTR=0
+              IF(TEXT1.EQ.'        SFR FLOWS TR') ISFTTR=1
+            ENDIF
+            IF(TEXT1.EQ.'                 UZF') FUZF=.TRUE.
+            IF(TEXT1.EQ.'           UZF FLOWS') FUZFFLOWS=.TRUE.
+            IF(TEXT1.EQ.'                 SWR') FSWR=.TRUE.
+            IF(TEXT1.EQ.'           SWR FLOWS') FSWRFLOWS=.TRUE. !NSY
+            IF(TEXT1.EQ.'     CONNECT SFR LAK') FSFRLAK=.TRUE.
+            IF(TEXT1.EQ.'     CONNECT SFR UZF') FSFRUZF=.TRUE.
+            IF(TEXT1.EQ.'     CONNECT LAK UZF') FLAKUZF=.TRUE.
+            IF(TEXT1.EQ.'     CONNECT SNK UZF') FSNKUZF=.TRUE.
+          ENDDO
+        ENDIF
 C
 C--DETERMINE WHICH FLOW COMPONENTS USED IN FLOW MODEL
-      IF(MTWEL.GT.0) FWEL=.TRUE.
-      IF(MTDRN.GT.0) FDRN=.TRUE.
-      IF(MTRCH.GT.0) FRCH=.TRUE.
-      IF(MTEVT.GT.0) FEVT=.TRUE.
-      IF(MTRIV.GT.0) FRIV=.TRUE.
-      IF(MTGHB.GT.0) FGHB=.TRUE.
-      IF(MTSTR.GT.0) FSTR=.TRUE.
-      IF(MTRES.GT.0) FRES=.TRUE.
-      IF(MTFHB.GT.0) FFHB=.TRUE.
-      IF(MTIBS.GT.0) FIBS=.TRUE.
-      IF(MTTLK.GT.0) FTLK=.TRUE.
-      IF(MTLAK.GT.0) FLAK=.TRUE.
-      IF(MTMNW.GT.0) FMNW=.TRUE.
-      IF(MTDRT.GT.0) FDRT=.TRUE.
-      IF(MTETS.GT.0) FETS=.TRUE.
-      IF(MTSWT.GT.0) FSWT=.TRUE.
-      IF(MTSFR.GT.0) FSFR=.TRUE.
-      IF(MTUZF.GT.0) FUZF=.TRUE.
+        IF(MTWEL.GT.0) FWEL=.TRUE.
+        IF(MTDRN.GT.0) FDRN=.TRUE.
+        IF(MTRCH.GT.0) FRCH=.TRUE.
+        IF(MTEVT.GT.0) FEVT=.TRUE.
+        IF(MTRIV.GT.0) FRIV=.TRUE.
+        IF(MTGHB.GT.0) FGHB=.TRUE.
+        IF(MTSTR.GT.0) FSTR=.TRUE.
+        IF(MTRES.GT.0) FRES=.TRUE.
+        IF(MTFHB.GT.0) FFHB=.TRUE.
+        IF(MTIBS.GT.0) FIBS=.TRUE.
+        IF(MTTLK.GT.0) FTLK=.TRUE.
+        IF(MTLAK.GT.0) FLAK=.TRUE.
+        IF(MTMNW.GT.0) FMNW=.TRUE.
+        IF(MTDRT.GT.0) FDRT=.TRUE.
+        IF(MTETS.GT.0) FETS=.TRUE.
+        IF(MTSWT.GT.0) FSWT=.TRUE.
+        IF(MTSFR.GT.0) FSFR=.TRUE.
+        IF(MTUZF.GT.0) FUZF=.TRUE.
 C
 C--DETERMINE IF THE SSM PACKAGE IS REQUIRED
-  200 IF(iUnitTRNOP(3).EQ.0) THEN
-        IF(FWEL.OR.FDRN.OR.FRCH.OR.FEVT.OR.FRIV.OR.FGHB.OR.
-     &     FSTR.OR.FRES.OR.FFHB.OR.FIBS.OR.FTLK.OR.FLAK.OR.FMNW.OR.
-     &     FDRT.OR.FETS.OR.FSWT.OR.FSFR.OR.FUZF) THEN
-          WRITE(*,300)
-          CALL USTOP(' ')
-        ELSEIF(MTCHD.GT.0) THEN
-          WRITE(*,302)
-          CALL USTOP(' ')
-        ELSEIF(ISS.EQ.0) THEN
-          WRITE(*,304)
-          CALL USTOP(' ')
+  200   IF(iUnitTRNOP(3).EQ.0) THEN
+          IF(FWEL.OR.FDRN.OR.FRCH.OR.FEVT.OR.FRIV.OR.FGHB.OR.
+     &       FSTR.OR.FRES.OR.FFHB.OR.FIBS.OR.FTLK.OR.FLAK.OR.FMNW.OR.
+     &       FDRT.OR.FETS.OR.FSWT.OR.FSFR.OR.FUZF.OR.FSFRFLOWS.OR.
+     &       FLAKFLOWS.OR.FUZFFLOWS.OR.FMNWFLOWS.OR.FSWRFLOWS) THEN
+            WRITE(*,300)
+            CALL USTOP(' ')
+          ELSEIF(MTCHD.GT.0) THEN
+            WRITE(*,302)
+            CALL USTOP(' ')
+          ELSEIF(ISS.EQ.0) THEN
+            WRITE(*,304)
+            CALL USTOP(' ')
+          ENDIF
         ENDIF
-      ENDIF
-  300 FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
-     &           'IN THE CURRENT SIMULATION',
-     &       /1X,'BECAUSE THE FLOW MODEL INCLUDES A SINK/SOURCE ',
-     &           'PACKAGE.')
-  302 FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
-     &           'IN THE CURRENT SIMULATION',
-     &       /1X,'BECAUSE THE FLOW MODEL CONTAINS CONSTANT-HEAD CELLS.')
-  304 FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
-     &           'IN THE CURRENT SIMULATION',
-     &       /1X,'BECAUSE THE FLOW MODEL IS TRANSIENT.')
+  300   FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
+     &             'IN THE CURRENT SIMULATION',
+     &         /1X,'BECAUSE THE FLOW MODEL INCLUDES A SINK/SOURCE ',
+     &             'PACKAGE.')
+  302   FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
+     &             'IN THE CURRENT SIMULATION',
+     &         /1X,'BECAUSE THE FLOW MODEL CONTAINS CONSTANT-HEAD ',
+     &             'CELLS.')
+  304   FORMAT(/1X,'ERROR: THE SSM PACKAGE MUST BE USED ',
+     &             'IN THE CURRENT SIMULATION',
+     &         /1X,'BECAUSE THE FLOW MODEL IS TRANSIENT.')
 C
-C--PRINT KEY INFORMATION OF THE FLOW MODEL
-      IF(ISS.EQ.0) THEN
-        WRITE(IOUT,310)
-      ELSE
-        WRITE(IOUT,320)
-      ENDIF
-      IF(MTCHD.GT.0) WRITE(IOUT,330)
-      WRITE(IOUT,'(1X)')
-  310 FORMAT(1X,'FLOW MODEL IS TRANSIENT')
-  320 FORMAT(1X,'FLOW MODEL IS STEADY-STATE')
-  330 FORMAT(1X,'FLOW MODEL CONTAINS CONSTANT-HEAD CELLS')
-C
+C--PRINT KEY INFORMATION OF THE FLOW MODEL (ON 1ST LAP ONLY)
+        IF(m_readDbl.EQ.0) THEN
+          IF(ISS.EQ.0) THEN
+            WRITE(IOUT,310)
+          ELSE
+            WRITE(IOUT,320)
+          ENDIF
+          IF(MTCHD.GT.0) WRITE(IOUT,330)
+          WRITE(IOUT,'(1X)')
+  310     FORMAT(1X,'FLOW MODEL IS TRANSIENT')
+  320     FORMAT(1X,'FLOW MODEL IS STEADY-STATE')
+  330     FORMAT(1X,'FLOW MODEL CONTAINS CONSTANT-HEAD CELLS')
+C         
 C--CHECK IF PACKAGES ARE ON
-      IF(FUZFFLOWS) THEN
-        IF(iUnitTRNOP(7).EQ.0) THEN
-          WRITE(IOUT,*) ' UZT FILE IS REQUIRED'
-          STOP
+          IF(FUZFFLOWS) THEN
+            IF(iUnitTRNOP(7).EQ.0) THEN
+              WRITE(IOUT,*) ' UZT FILE IS REQUIRED'
+              STOP
+            ENDIF
+          ELSE
+            IF(iUnitTRNOP(7).GT.0) THEN
+              WRITE(IOUT,*) ' UZT FILE WILL NOT BE USED'
+              iUnitTRNOP(7)=0
+            ENDIF
+          ENDIF
+          IF(FLAKFLOWS) THEN
+            IF(iUnitTRNOP(18).EQ.0) THEN
+              WRITE(IOUT,*) ' LKT FILE IS REQUIRED'
+              STOP
+            ENDIF
+          ELSE
+            IF(iUnitTRNOP(18).GT.0) THEN
+              WRITE(IOUT,*) ' LKT FILE WILL NOT BE USED'
+              iUnitTRNOP(18)=0
+            ENDIF
+          ENDIF
+          IF(FSFRFLOWS) THEN
+            IF(iUnitTRNOP(19).EQ.0) THEN
+              WRITE(IOUT,*) ' SFT FILE IS REQUIRED'
+              STOP
+            ENDIF
+          ELSE
+            IF(iUnitTRNOP(19).GT.0) THEN
+              WRITE(IOUT,*) ' SFT FILE WILL NOT BE USED'
+              iUnitTRNOP(19)=0
+            ENDIF
+          ENDIF
         ENDIF
-      ELSE
-        IF(iUnitTRNOP(7).GT.0) THEN
-          WRITE(IOUT,*) ' UZT FILE WILL NOT BE USED'
-          iUnitTRNOP(7)=0
+C
+C--CHECK HOW ARRAYS ARE WRITTEN (SINGLE OR DBLE PRECISION)
+        IF(.NOT.OK2EXIT) THEN
+          IF (IFTLFMT.LT.2) THEN
+C
+C--READ IDENTIFYING RECORD
+            IF(IFTLFMT.EQ.0) THEN
+              READ(INFTL) KPER,KKSTP,NC,NR,NL,LABEL
+            ELSEIF(IFTLFMT.EQ.1) THEN
+              READ(INFTL,*) KPER,KKSTP,NC,NR,NL,LABEL
+            ENDIF
+C
+            IF (m_readDbl.EQ.0) THEN
+              ! try reading the array single precision
+              IF(IFTLFMT.EQ.0) THEN
+                READ(INFTL) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
+              ELSEIF(IFTLFMT.EQ.1) THEN
+                READ(INFTL,*) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),
+     &                           K=1,NLAY)
+              ENDIF
+            ELSEIF (m_readDbl.EQ.1) THEN
+              ! read array as double precision instead
+              ALLOCATE (arrDbl(NCOL,NROW,NLAY))
+C           
+              IF(IFTLFMT.EQ.0) THEN
+                READ(INFTL) (((arrDbl(J,I,K),J=1,NCOL),I=1,NROW),
+     &                         K=1,NLAY)
+              ELSEIF(IFTLFMT.EQ.1) THEN
+                READ(INFTL,*) (((arrDbl(J,I,K),J=1,NCOL),I=1,NROW),
+     &                           K=1,NLAY)
+              ENDIF
+            ENDIF
+C
+            IF(IFTLFMT.EQ.0) THEN
+              READ(INFTL) KKPER,KKSTP,NC,NR,NL,LABEL
+            ELSEIF(IFTLFMT.EQ.1) THEN
+              READ(INFTL,*) KKPER,KKSTP,NC,NR,NL,LABEL
+            ENDIF
+C
+            ! file pointer will be on recognizable values
+            ! if single precision
+            IF (KKPER.ne.KPER .or. NC.ne.NCOL .or.
+     &          NR.ne.NROW .or. NL.ne.NLAY) THEN
+              WRITE(IOUT,11)
+   11         FORMAT(/1X,'WARNING: FTL FILE IS NOT SINGLE PRECISION, 
+     &               ATTEMPTING TO READ AS DBLE PRECISION')
+              m_readDbl=1
+              REWIND(INFTL)
+            ELSEIF (KKPER.EQ.KPER .AND. NC.EQ.NCOL .AND.
+     &          NR.EQ.NROW .AND. NL.EQ.NLAY .AND. m_readDbl.LT.1) THEN
+              m_readDbl=1
+              REWIND(INFTL)
+              OK2EXIT=.TRUE.
+            ELSEIF (KKPER.EQ.KPER .AND. NC.EQ.NCOL .AND.
+     &          NR.EQ.NROW .AND. NL.EQ.NLAY .AND. m_readDbl.EQ.1) THEN
+              WRITE(IOUT,12)
+   12         FORMAT(/1X,'SETTING FTL READER TO DOUBLE PRECISION')
+              m_readDbl=2
+              REWIND(INFTL)
+              OK2EXIT=.TRUE.
+            ELSEIF (KKPER.ne.KPER .or. NC.ne.NCOL .or.
+     &          NR.ne.NROW .or. NL.ne.NLAY .AND. m_readDbl.GT.0) THEN
+              WRITE(IOUT,13)
+   13         FORMAT(/1X,'FTL FILE NOT SINGLE OR DOUBLE PRECISION,
+     &               STOPPING')
+              CALL USTOP(' ')
+            ENDIF
+          ENDIF
+        ELSEIF(OK2EXIT) THEN
+          EXIT
         ENDIF
-      ENDIF
-      IF(FLAKFLOWS) THEN
-        IF(iUnitTRNOP(18).EQ.0) THEN
-          WRITE(IOUT,*) ' LKT FILE IS REQUIRED'
-          STOP
-        ENDIF
-      ELSE
-        IF(iUnitTRNOP(18).GT.0) THEN
-          WRITE(IOUT,*) ' LKT FILE WILL NOT BE USED'
-          iUnitTRNOP(18)=0
-        ENDIF
-      ENDIF
-      IF(FSFRFLOWS) THEN
-        IF(iUnitTRNOP(19).EQ.0) THEN
-          WRITE(IOUT,*) ' SFT FILE IS REQUIRED'
-          STOP
-        ENDIF
-      ELSE
-        IF(iUnitTRNOP(19).GT.0) THEN
-          WRITE(IOUT,*) ' SFT FILE WILL NOT BE USED'
-          iUnitTRNOP(19)=0
-        ENDIF
-      ENDIF
+      END DO
 C
 C--DONE, RETURN
       GOTO 1000
@@ -247,10 +340,12 @@ C--ERROR READING THE FLOW-TRANSPORT LINK FILE
   600 FORMAT(/1X,'Error Reading Flow-Transport Link File ',
      &           'Possibly Caused by:',
      &       /1X,'1. Incompatible Styles of Unformatted Files ',
-     &           'Used by MODFLOW and MT3DMS;'
+     &           'Used by MODFLOW and MT3D-USGS, ensure usage ',
+     &       /1X,'of FREE in MT3D-USGS name file matches LMT;',
      &       /1X,'2. Unformatted Flow-Transport Link File Saved by ',
-     &           'Verison 1 of LinkMT3D',
-     &       /1X,'   Package Which Is No Longer Supported by MT3DMS.')
+     &           'Version 1 of LinkMT3D',
+     &       /1X,'   Package Which Is No Longer Supported by ',
+     &           'MT3D-USGS.')
 C
  1000 RETURN
       END
@@ -327,7 +422,7 @@ C--READ STORAGE TERM (UNIT: L**3/T).
 C
 C--SET ICBUND=0 IF CELL IS DRY OR INACTIVE (INDICATED BY FLAG 1.E30)
 C--AND REACTIVATE DRY CELL IF REWET AND ASSIGN CONC AT REWET CELL
-C--WITH UZF TURNED ON THE GRID BECOMES FIXED.  THE USER PROVIDEDED
+C--WITH UZF TURNED ON THE GRID BECOMES FIXED.  THE USER PROVIDED
 C--ICBUND ARRAY SHOULD REMAIN UNTOUCHED                           
       IF(.NOT.FUZFFLOWS.OR.IUZFOPTG.EQ.0) THEN                         
         DO K=1,NLAY
@@ -400,7 +495,7 @@ C--IF THE FLOW-TRANSPORT LINK FILE IS SAVED BY LKMT PACKAGE VER 1
 C
 C--SET CELLS TO INACTIVE IF SATURATED THICKNESS < OR = 0, OR
 C--IF SATURATED THICKNESS IS BELOW USER-SPECIFIED MINIMUM [THKMIN].
-C--WITH UZF TURNED ON THE GRID BECOMES FIXED.  THE USER PROVIDEDED
+C--WITH UZF TURNED ON THE GRID BECOMES FIXED.  THE USER PROVIDED
 C--ICBUND ARRAY SHOULD REMAIN UNTOUCHED                           
       IF(DRYON) THEN                                    
         NICBND2=0                                                 
@@ -493,7 +588,8 @@ C
       ENDDO
 C
   420 IF(NLAY.LT.2) GOTO 430
-      IF(FUZFFLOWS) GOTO 430  ! THIS CALCULATION IS REPEATED IN RP2 WHEN FUZFFLOWS>0
+      IF(FUZFFLOWS) GOTO 430  ! THIS CALCULATION IS REPEATED
+                              ! IN RP2 WHEN FUZFFLOWS>0
       DO J=1,NCOL
         DO I=1,NROW
           DO K=2,NLAY
@@ -554,7 +650,7 @@ C--PRINT INFORMATION ON DTRACK2
      &           '(WHEN MIN. R.F.=1)  AT K=',I4,', I=',I4,', J=',I4)
 C
 C--DIVIDE VOLUMETRIC QX, QY AND QZ BY AREAS
-C--TO GET SPECIFIC DISCHAGES ACROSS EACH CELL INTERFACE
+C--TO GET SPECIFIC DISCHARGES ACROSS EACH CELL INTERFACE
       IF(NCOL.LT.2) GOTO 910
       DO K=1,NLAY
         DO I=1,NROW
@@ -738,7 +834,7 @@ C
      &                         iUnitTRNOP,NPCKGTXT,FLAKFLOWS,FMNWFLOWS,
      &                         FSFRFLOWS,FUZFFLOWS,FSWR,FSWRFLOWS,
      &                         FSFRLAK,FSFRUZF,FLAKUZF,FSNKUZF,
-     &                         DZ,QZ,PRSITY,QSTO,QX,QY
+     &                         DZ,QZ,PRSITY,QSTO,QX,QY,HT1,HT2
       USE INTERFACE1
 C
       IMPLICIT  NONE
@@ -752,20 +848,20 @@ C
       INTEGER   NFLOWTYPE,NRCHCON,NNGW
       REAL,         ALLOCATABLE      :: PKGFLOWS(:,:),QAREA(:),
      1                                  QN2N(:)
-      CHARACTER*20, ALLOCATABLE      :: CFLOWTYPE(:)
+      CHARACTER*16, ALLOCATABLE      :: CFLOWTYPE(:)
       INTEGER,      ALLOCATABLE      :: INOD1(:),INOD2(:),IDISP(:)
       INTEGER,      ALLOCATABLE      :: ICID(:)
       REAL,         ALLOCATABLE      :: QAUX(:)
       INTEGER,      ALLOCATABLE      :: IP2PFLG(:)
-      CHARACTER*20  FLWTYP
+      CHARACTER*16  FLWTYP
 C
       INUF=INFTL
 C
 C--RESET TOTAL NUMBER OF POINT SINKS/SOURCES AND CLEAR FLOW RATES
       NTSS=NSS
-      SS(8,:)=0.
       DO NUM=1,NTSS
         SS(5,NUM)=0.
+        SS(8,NUM)=0.
       ENDDO
 C
 C--RESET [ICBUND] VALUE AT ACTIVE CELLS TO UNITY
@@ -822,7 +918,7 @@ C--READ RIVER FLOW TERM (L**3/T) IF RIVER OPTION USED IN FLOW MODEL.
      &              BUFF,IQ,MXSS,NTSS,NSS,SS,ICBUND,FPRT)
       ENDIF
 C
-C--READ GERENAL HEAD DEPENDENT BOUNDARY FLOW TERM (L**3/T)
+C--READ GENERAL HEAD DEPENDENT BOUNDARY FLOW TERM (L**3/T)
 C--IF GHB OPTION IS USED IN FLOW MODEL.
       IF(FGHB) THEN
         TEXT='GHB'
@@ -948,6 +1044,25 @@ C-------IF NOT THE FIRST TIME STEP, COPY SATNEW TO SATOLD
               ENDDO                                    
             ENDDO                                      
           ENDIF                                        
+C
+C-------CHECK WC (FLOW MODEL) VERSUS POROSITY (BTN FILE)
+          DO K=1,NLAY
+            DO I=1,NROW
+              DO J=1,NCOL
+                IF(WC(J,I,K).GT.PRSITYSAV(J,I,K)+1.0E-3) THEN
+                  WRITE(IOUT,*) 'WATER CONTENT > POROSITY, STOPPING!'
+                  WRITE(IOUT,'(A,2(1X,1PG12.4),3I6)')
+     1              'WC, POR, Lay, Row, Col',
+     1              WC(J,I,K),PRSITYSAV(J,I,K),K,I,J
+                  WRITE(*,*) 'WATER CONTENT > POROSITY, STOPPING!'
+                  WRITE(*,'(A,2(1X,1PG12.4),3I6)')
+     1              'WC, POR, Lay, Row, Col',
+     1              WC(J,I,K),PRSITYSAV(J,I,K),K,I,J
+                  STOP
+                ENDIF
+              ENDDO
+            ENDDO
+          ENDDO
 C                                                    
 C-------COMPUTE SATURATION                                
           PRSITY=>PRSITYSAV                            
@@ -964,8 +1079,21 @@ C-------COMPUTE SATURATION
                     SATNEW(J,I,K)=((DZ(J,I,K)-DH(J,I,K))/DZ(J,I,K))*
      &                            WC(J,I,K)/PRSITY(J,I,K)+          
      &                            DH(J,I,K)/DZ(J,I,K)*1             
+C                    SATNEW(J,I,K)=MIN(1.0,SATNEW(J,I,K))
+C                    SATNEW(J,I,K)=MAX(1.0E-8,SATNEW(J,I,K))
                   ENDIF                                             
                 ENDIF                                               
+                IF(KPER.EQ.1 .AND. KSTP.EQ.1) THEN
+                  IF(ICBUND(J,I,K,1).NE.0) THEN
+                    if(dz(j,i,k).ne.0) then 
+                    SATOLD(J,I,K)=SATNEW(J,I,K)-
+     &                QSTO(J,I,K)*(HT2-HT1)/
+     &                (PRSITY(J,I,K)*DELR(J)*DELC(I)*DZ(J,I,K))
+                  endif
+                    SATOLD(J,I,K)=MIN(1.0,SATOLD(J,I,K))
+                    SATOLD(J,I,K)=MAX(1.0E-8,SATOLD(J,I,K))
+                  ENDIF
+                ENDIF
               ENDDO                                                 
             ENDDO                                                   
           ENDDO                                                     
@@ -980,7 +1108,7 @@ C-------THE NEXT LINE THAT CHECKS FOR -111 IS DUE TO CONFINED LAYERS,
 C-------ENSURES QZ ISN'T SET TO UZFLX IN THE EVENT DH = -111           
                   IF(INT(DH(J,I,K)).EQ.-111) DH(J,I,K)=DZ(J,I,K)    
                   IF(DH(J,I,K).LT.1E-5 .AND. .NOT. 
-     &                UZFLX(J,I,K+1).LE.0.0) THEN                        
+     &                UZFLX(J,I,K+1).LE.0.0) THEN
                     QZ(J,I,K)=UZFLX(J,I,K+1)                        
                   ENDIF                                             
                 ENDIF                                               
@@ -1102,7 +1230,7 @@ C--PRINT INFORMATION ON DTRACK2
      &             '(WHEN MIN. R.F.=1)  AT K=',I4,', I=',I4,', J=',I4)
 C
 C--DIVIDE VOLUMETRIC QX, QY AND QZ BY AREAS
-C--TO GET SPECIFIC DISCHAGES ACROSS EACH CELL INTERFACE
+C--TO GET SPECIFIC DISCHARGES ACROSS EACH CELL INTERFACE
         IF(NCOL.LT.2) GOTO 910
         DO K=1,NLAY
           DO I=1,NROW
@@ -1259,17 +1387,17 @@ C-------MAP TO SFT ARRAYS
         DO IFL=1,NFLOWTYPE
           FLWTYP=CFLOWTYPE(IFL)
           SELECT CASE (FLWTYP)
-            CASE("PRECIP              ")  !L3/T
+            CASE("PRECIP          ")  !L3/T
               QPRECLAK(:)=PKGFLOWS(IFL,:)
-            CASE("RUNOFF              ")  !L3/T
+            CASE("RUNOFF          ")  !L3/T
               QRUNOFLAK(:)=PKGFLOWS(IFL,:)
-            CASE("WITHDRAW             ") !L3/T
+            CASE("WITHDRAW        ") !L3/T
               QWDRLLAK(:)=PKGFLOWS(IFL,:)
-            CASE("EVAP                ")  !L3/T
+            CASE("EVAP            ")  !L3/T
               QETLAK(:)=PKGFLOWS(IFL,:)
-            CASE("VOLUME              ")  !L3 - OLD VOLUME
+            CASE("VOLUME          ")  !L3 - OLD VOLUME
               VOLOLAK(:)=PKGFLOWS(IFL,:)
-            CASE("DELVOL              ")  !L3/T
+            CASE("DELVOL          ")  !L3/T
               DELVOLLAK(:)=PKGFLOWS(IFL,:)
             CASE DEFAULT
               WRITE(*,*) 'INCORRECT CFLOWTYPE IN FTL FILE'
@@ -1343,15 +1471,15 @@ C-------MAP TO SFT ARRAYS
         DO IFL=1,NFLOWTYPE
           FLWTYP=CFLOWTYPE(IFL)
           SELECT CASE (FLWTYP)
-            CASE("PRECIP              ") !L3/T
+            CASE("PRECIP          ") !L3/T
               QPRECSF(:)=PKGFLOWS(IFL,:)
-            CASE("RUNOFF              ") !L3/T
+            CASE("RUNOFF          ") !L3/T
               QRUNOFSF(:)=PKGFLOWS(IFL,:)
-            CASE("EVAP                ") !L3/T
+            CASE("EVAP            ") !L3/T
               QETSF(:)=PKGFLOWS(IFL,:)
-            CASE("VOLUME              ") !L3 - NEW VOLUME
+            CASE("VOLUME          ") !L3 - NEW VOLUME
               VOLSFN(:)=PKGFLOWS(IFL,:)
-            CASE("RCHLEN              ") !L
+            CASE("RCHLEN          ") !L
               SFLEN(:)=PKGFLOWS(IFL,:)
             CASE DEFAULT
               WRITE(*,*)    'INCORRECT CFLOWTYPE IN FTL FILE'
@@ -1528,7 +1656,7 @@ C
           K=IRCH(J,I)
           IF(K.EQ.0) CYCLE
           VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-          IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+          IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
           IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN
             IF(DRYON) THEN
               RECH(J,I)=RECH(J,I)/ABS(VOLAQU) !MAINTAIN CORRECT SIGN
@@ -1555,10 +1683,15 @@ C--DIVIDE INFILTRATED VOL BY AQUIFER VOLUME TO GET PER UNIT AQ. VOL
         DO J=1,NCOL                         
           IF(FINFIL(J,I).EQ.0) CYCLE        
           K=ABS(IUZFBND(J,I))
+          IF(K.EQ.0) CYCLE
           VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)            
-          IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+          IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
           IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN
-            FINFIL(J,I)=0.                            
+            IF(DRYON) THEN
+              FINFIL(J,I)=FINFIL(J,I)/ABS(VOLAQU)
+            ELSE
+              FINFIL(J,I)=0.                            
+            ENDIF
           ELSE                                        
             FINFIL(J,I)=FINFIL(J,I)/VOLAQU            
           ENDIF                                       
@@ -1579,7 +1712,7 @@ C
           K=IEVT(J,I)
           IF(K.EQ.0) CYCLE
           VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-          IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+          IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
           IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN
             IF(DRYON) THEN
               EVTR(J,I)=EVTR(J,I)/ABS(VOLAQU) !MAINTAIN CORRECT SIGN
@@ -1608,9 +1741,13 @@ C--(UZET)
         DO I=1,NROW           
           DO J=1,NCOL         
             VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-            IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+            IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
             IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN
-              UZET(J,I,K)=0                             
+              IF(DRYON) THEN
+                UZET(J,I,K)=UZET(J,I,K)/ABS(VOLAQU)
+              ELSE
+                UZET(J,I,K)=0                             
+              ENDIF
             ELSE                                        
               UZET(J,I,K)=UZET(J,I,K)/VOLAQU            
             ENDIF                                       
@@ -1633,9 +1770,13 @@ C      DO K=1,NLAY
             K=IGWET(J,I)
             IF(K.EQ.0) CYCLE
             VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)             
-            IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+            IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
             IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN 
-              GWET(J,I)=0                              
+              IF(DRYON) THEN
+                GWET(J,I)=GWET(J,I)/ABS(VOLAQU)
+              ELSE
+                GWET(J,I)=0                              
+              ENDIF
             ELSE                                         
               GWET(J,I)=GWET(J,I)/VOLAQU             
             ENDIF                                        
@@ -1659,7 +1800,7 @@ C
         IQ=SS(6,NUM)
         IF(IQ.EQ.26.AND.K.EQ.0.AND.I.EQ.0) CYCLE
         VOLAQU=DELR(J)*DELC(I)*DH(J,I,K)
-        IF(ABS(VOLAQU).LE.1.E-5) VOLAQU=1.E-5
+        IF(ABS(VOLAQU).LE.1.E-8) VOLAQU=1.E-8
         IF(ICBUND(J,I,K,1).EQ.0.OR.VOLAQU.LE.0) THEN
           IF(DRYON) THEN
             SS(5,NUM)=SS(5,NUM)/ABS(VOLAQU) !MAINTAIN CORRECT SIGN
@@ -1714,6 +1855,7 @@ C THIS SUBROUTINE READS HEADS AND VOLUMETRIC FLUXES ACROSS CELL
 C INTERFACES FROM AN UNFORMATTED FILE SAVED BY THE FLOW MODEL.
 C *****************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT
 C
       IMPLICIT  NONE
@@ -1722,6 +1864,7 @@ C
       REAL      BUFF
       CHARACTER TEXT*16,FPRT*1,LABEL*16
       DIMENSION BUFF(NCOL,NROW,NLAY)
+      REAL*8, ALLOCATABLE :: arrDbl(:,:,:)
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -1747,11 +1890,27 @@ C--CHECK INTERFACE
 C
 C--READ AN UNFORMATTED RECORD CONTAINING VALUES FOR
 C--EACH CELL IN THE GRID
-      IF(IFTLFMT.EQ.0) THEN
-        READ(INUF) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
-      ELSEIF(IFTLFMT.EQ.1) THEN
-        READ(INUF,*) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
-      ENDIF
+      IF (m_readDbl.EQ.2) THEN                                       
+        ALLOCATE(arrDbl(NCOL,NROW,NLAY))                             
+        IF(IFTLFMT.EQ.0) THEN                                        
+          READ(INUF) (((arrDbl(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)  
+        ELSEIF(IFTLFMT.EQ.1) THEN                                    
+          READ(INUF,*) (((arrDbl(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
+        ENDIF                                                        
+        DO J=1,NCOL                                                  
+          DO I=1,NROW                                                
+            DO K=1,NLAY                                              
+              BUFF(J,I,K) = REAL(arrDbl(J,I,K))                      
+            END DO                                                   
+          END DO                                                     
+        END DO                                                       
+      ELSE                                                           
+        IF(IFTLFMT.EQ.0) THEN
+          READ(INUF) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
+        ELSEIF(IFTLFMT.EQ.1) THEN
+          READ(INUF,*) (((BUFF(J,I,K),J=1,NCOL),I=1,NROW),K=1,NLAY)
+        ENDIF
+      END IF                                                            
 C
 C--PRINT OUT INPUT FOR CHECKING IF REQUESTED
       IF(FPRT.NE.'Y'.AND.FPRT.NE.'y') RETURN
@@ -1796,6 +1955,7 @@ C SINK/SOURCE TERMS (RECHARGE AND EVAPOTRANSPIRATION) FROM AN
 C UNFORMATTED FILE SAVED BY THE FLOW MODEL.
 C *****************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT
 C
       IMPLICIT  NONE
@@ -1804,6 +1964,7 @@ C
       REAL      BUFF
       CHARACTER TEXT*16,FPRT*1,LABEL*16
       DIMENSION BUFF(NCOL,NROW),LOCLAY(NCOL,NROW)
+      REAL*8, ALLOCATABLE :: arrDbl(:,:)
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -1836,11 +1997,25 @@ C--READ LAYER LOCATION IF FLOW TERM IS RECHARGE OR E.T.
 C
 C--READ AN UNFORMATTED RECORD CONTAINING VALUES FOR
 C--EACH CELL IN THE GRID
-      IF(IFTLFMT.EQ.0) THEN
-        READ(INUF) ((BUFF(J,I),J=1,NCOL),I=1,NROW)
-      ELSEIF(IFTLFMT.EQ.1) THEN
-        READ(INUF,*) ((BUFF(J,I),J=1,NCOL),I=1,NROW)
-      ENDIF
+      IF (m_readDbl.eq.2) then                          
+        ALLOCATE(arrDbl(NCOL,NROW))                     
+        IF(IFTLFMT.EQ.0) THEN                           
+          READ(INUF) ((arrDbl(J,I),J=1,NCOL),I=1,NROW)  
+        ELSEIF(IFTLFMT.EQ.1) THEN                       
+          READ(INUF,*) ((arrDbl(J,I),J=1,NCOL),I=1,NROW)
+        ENDIF                                           
+        DO J=1,NCOL                                     
+          DO I=1,NROW                                   
+            BUFF(J,I) = REAL(arrDbl(J,I))               
+          END DO                                        
+        END DO                                          
+      ELSE                                              
+        IF(IFTLFMT.EQ.0) THEN
+          READ(INUF) ((BUFF(J,I),J=1,NCOL),I=1,NROW)
+        ELSEIF(IFTLFMT.EQ.1) THEN
+          READ(INUF,*) ((BUFF(J,I),J=1,NCOL),I=1,NROW)
+        ENDIF
+      ENDIF 
 C
 C--PRINT OUT INPUT FOR CHECKING IF REQUESTED
       IF(FPRT.NE.'Y'.AND.FPRT.NE.'y') RETURN
@@ -1883,6 +2058,7 @@ C THIS SUBROUTINE READS LOCATIONS AND FLOW RATES OF POINT SINK/SOURCE
 C FLOW TERMS FROM AN UNFORMATTED FILE SAVED BY THE FLOW MODEL.
 C *********************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT,ICTSPKG
 C
       IMPLICIT  NONE
@@ -1892,6 +2068,7 @@ C
       REAL      BUFF,SS,QSS,QSTEMP
       CHARACTER TEXT*16,FPRT*1,LABEL*16
       DIMENSION BUFF(NCOL,NROW,NLAY),ICBUND(NCOL,NROW,NLAY),SS(8,MXSS)
+      REAL*8    dbl
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -1921,10 +2098,19 @@ C
 C--READ AN UNFORMATTED RECORD CONTAINING VALUES FOR
 C--EACH POINT SINK OR SOURCE
       DO N=1,NUM
-        IF(IFTLFMT.EQ.0) THEN
-          READ(INUF) K,I,J,QSTEMP
-        ELSEIF(IFTLFMT.EQ.1) THEN
-          READ(INUF,*) K,I,J,QSTEMP
+        IF (m_readDbl.EQ.2) THEN   
+          IF(IFTLFMT.EQ.0) THEN    
+            READ(INUF) K,I,J,dbl   
+          ELSEIF(IFTLFMT.EQ.1) THEN
+            READ(INUF,*) K,I,J,dbl 
+          ENDIF                    
+          QSTEMP = REAL(dbl)       
+        ELSE                       
+          IF(IFTLFMT.EQ.0) THEN
+            READ(INUF) K,I,J,QSTEMP
+          ELSEIF(IFTLFMT.EQ.1) THEN
+            READ(INUF,*) K,I,J,QSTEMP
+          ENDIF
         ENDIF
         IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
      &              WRITE(IOUT,50) K,I,J,QSTEMP        
@@ -1943,7 +2129,7 @@ C--STORE FLOW RATE QSTEMP
           SS(7,ITEMP)=0
           IF(LABEL.EQ.'WEL             '.AND.ICTSPKG.EQ.1)SS(8,ITEMP)=N
 C
-C--MARK CELLS NEAR THE SINK/SOURCE                   
+C--MARK CELLS NEAR THE SINK/SOURCE
           IF(QSTEMP.LT.0 .AND. ICBUND(J,I,K).GT.0) THEN                
             ICBUND(J,I,K)=1000+IQ
           ELSEIF(ICBUND(J,I,K).GT.0 ) THEN
@@ -2002,6 +2188,7 @@ C THIS SUBROUTINE READS LOCATIONS AND FLOW RATES OF SINK/SOURCE GROUPS
 C THAT ARE CONNECTED FROM THE FLOW-TRANSPORT LINK FILE
 C *********************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT,ICTSPKG
 C
       IMPLICIT  NONE
@@ -2011,6 +2198,7 @@ C
       REAL      BUFF,SS,QSS,QSTEMP,QSW
       CHARACTER TEXT*16,FPRT*1,LABEL*16
       DIMENSION BUFF(NCOL,NROW,NLAY),ICBUND(NCOL,NROW,NLAY),SS(8,MXSS)
+      REAL*8    dbl,dbl1
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -2040,11 +2228,21 @@ C
 C--READ AN UNFORMATTED RECORD CONTAINING VALUES FOR
 C--EACH POINT SINK OR SOURCE
       DO N=1,NUM
-        IF(IFTLFMT.EQ.0) THEN
-          READ(INUF) K,I,J,QSTEMP,IGROUP,QSW
-        ELSEIF(IFTLFMT.EQ.1) THEN
-          READ(INUF,*) K,I,J,QSTEMP,IGROUP,QSW
-        ENDIF
+        IF (m_readDbl.eq.2) THEN                
+          IF(IFTLFMT.EQ.0) THEN                 
+            READ(INUF) K,I,J,dbl,IGROUP,dbl1    
+          ELSEIF(IFTLFMT.EQ.1) THEN             
+            READ(INUF,*) K,I,J,dbl,IGROUP,dbl1  
+          ENDIF                                 
+          QSTEMP = REAL(dbl)                    
+          QSW = REAL(dbl)                       
+        ELSE                                    
+          IF(IFTLFMT.EQ.0) THEN
+            READ(INUF) K,I,J,QSTEMP,IGROUP,QSW
+          ELSEIF(IFTLFMT.EQ.1) THEN
+            READ(INUF,*) K,I,J,QSTEMP,IGROUP,QSW
+          ENDIF
+        ENDIF                                   
         IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') WRITE(IOUT,50) K,I,J,QSTEMP,
      &                                                IGROUP,QSW
 C
@@ -2062,7 +2260,7 @@ C--STORE FLOW RATE QSTEMP
           SS(7,ITEMP)=IGROUP
           IF(LABEL.EQ.'MNW             '.AND.ICTSPKG.EQ.0) SS(8,ITEMP)=N
 C
-C--MAKR CELLS NEAR THE SINK/SOURCE                   
+C--MARK CELLS NEAR THE SINK/SOURCE
           IF(QSTEMP.LT.0 .AND. ICBUND(J,I,K).GT.0 ) THEN
             ICBUND(J,I,K)=1000+IQ
           ELSEIF(ICBUND(J,I,K).GT.0) THEN              
@@ -2145,7 +2343,7 @@ C--INITIALIZE
       D2SUM=0
       CTMP=0
 C
-C--ACCUMULATE CONCENTRATIONS AT NEIGHBORING NODELS
+C--ACCUMULATE CONCENTRATIONS AT NEIGHBORING NODES
 C--IN THE LAYER DIRECTION
       IF(NLAY.EQ.1) GOTO 10
       IF(KK-1.GT.0) THEN
@@ -2255,6 +2453,7 @@ C 2. INTERNAL FLOWS WITHIN A PACKAGE AND INFLOW (HEADWATER) AND
 C    OUTFLOW (EXIT BOUNDARY)
 C *********************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT
       IMPLICIT  NONE
       INTEGER   KSTP,KPER,INUF,NCOL,NROW,NLAY,IOUT,K,I,J,KKSTP,KKPER,
@@ -2267,11 +2466,13 @@ C
       INTEGER,  DIMENSION(:), POINTER :: INFL,INFR,INFC
       REAL,     DIMENSION(:), POINTER :: QNGW
       REAL,         ALLOCATABLE       :: PKGFLOWS(:,:),QAREA(:),
-     &                                  QN2N(:)
-      CHARACTER*20, ALLOCATABLE       :: CFLOWTYPE(:)
+     &                                   QN2N(:)
+      CHARACTER*16, ALLOCATABLE       :: CFLOWTYPE(:)
       INTEGER,      ALLOCATABLE       :: INOD1(:),INOD2(:),IDISP(:)
       INTEGER,      ALLOCATABLE       :: ICID(:)
       REAL,         ALLOCATABLE       :: QAUX(:)
+      REAL*8,       ALLOCATABLE       :: arrDbl(:,:)
+      REAL*8                          :: dbl1,dbl2
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -2302,35 +2503,48 @@ C--GROUNDWATER FLOW
       IF(NNGW.GT.0) THEN
 C
 C--ALLOCATE ARRAYS
-      ALLOCATE(INFL(NNGW),INFR(NNGW),INFC(NNGW),QNGW(NNGW))
+        ALLOCATE(INFL(NNGW),INFR(NNGW),INFC(NNGW),QNGW(NNGW))
 C
 C--READ GW EXCHANGE TERMS
-      IF(IPSGS.EQ.0) THEN
-        DO N=1,NNGW
-          IF(IFTLFMT.EQ.0) THEN
-            READ(INUF) INFL(N),INFR(N),INFC(N),QNGW(N)
-          ELSEIF(IFTLFMT.EQ.1) THEN
-            READ(INUF,*) INFL(N),INFR(N),INFC(N),QNGW(N)
-          ENDIF
-          IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
-     &              WRITE(IOUT,50) INFL(N),INFR(N),INFC(N),QNGW(N)
-        ENDDO  
-      ELSEIF(IPSGS.EQ.1) THEN
-        ALLOCATE(ICID(NNGW),QAUX(NNGW))
-        DO N=1,NNGW
-          IF(IFTLFMT.EQ.0) THEN
-            READ(INUF) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),QAUX(N)
-          ELSEIF(IFTLFMT.EQ.1) THEN
-            READ(INUF,*) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),QAUX(N)
-          ENDIF
-          IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
-     &    WRITE(IOUT,55) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),QAUX(N)
-        ENDDO  
-      ELSE
-        WRITE(*,*) 'INVALID IPSGS',IPSGS
-        WRITE(IOUT,*) 'INVALID IPSGS',IPSGS
-        CALL USTOP(' ')
-      ENDIF
+        IF(IPSGS.EQ.0) THEN
+          DO N=1,NNGW
+            IF(IFTLFMT.EQ.0) THEN
+              IF(m_readDbl.EQ.2) THEN
+                READ(INUF) INFL(N),INFR(N),INFC(N),dbl1
+                QNGW(N)=REAL(dbl1)
+              ELSE
+                READ(INUF) INFL(N),INFR(N),INFC(N),QNGW(N)
+              ENDIF
+            ELSEIF(IFTLFMT.EQ.1) THEN
+              READ(INUF,*) INFL(N),INFR(N),INFC(N),QNGW(N)
+            ENDIF
+            IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
+     &                WRITE(IOUT,50) INFL(N),INFR(N),INFC(N),QNGW(N)
+          ENDDO  
+        ELSEIF(IPSGS.EQ.1) THEN
+          ALLOCATE(ICID(NNGW),QAUX(NNGW))
+          DO N=1,NNGW
+            IF(IFTLFMT.EQ.0) THEN
+              IF(m_readDbl.EQ.2) THEN
+                READ(INUF) INFL(N),INFR(N),INFC(N),dbl1,ICID(N),QAUX(N)
+                QNGW(N)=REAL(dbl1)
+              ELSE
+                READ(INUF) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),
+     &                     QAUX(N)
+              ENDIF
+            ELSEIF(IFTLFMT.EQ.1) THEN
+              READ(INUF,*) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),
+     &                     QAUX(N)
+            ENDIF
+            IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
+     &        WRITE(IOUT,55) INFL(N),INFR(N),INFC(N),QNGW(N),ICID(N),
+     &                       QAUX(N)
+          ENDDO  
+        ELSE
+          WRITE(*,*) 'INVALID IPSGS',IPSGS
+          WRITE(IOUT,*) 'INVALID IPSGS',IPSGS
+          CALL USTOP(' ')
+        ENDIF
 C
       ENDIF !IF(NNGW.GT.0)
 C
@@ -2361,6 +2575,7 @@ C--READ THIS BLOCK FOR NODAL FLOWS (BOUNDARY CONDITIONS OR CELL SPECIFIC FLOWS)
 C
 C--ALLOCATE
         ALLOCATE(CFLOWTYPE(NFLOWTYPE),PKGFLOWS(NFLOWTYPE,NNODES))
+        IF(m_readDbl.EQ.2) ALLOCATE(arrDbl(NFLOWTYPE,NNODES))
 C
 C--READ CFLOWTYPE IDENTIFIER TEXT
         IF(IFTLFMT.EQ.0) THEN
@@ -2370,13 +2585,20 @@ C--READ CFLOWTYPE IDENTIFIER TEXT
         ENDIF
 C
         IF(FPRT.EQ.'Y'.OR.FPRT.EQ.'y') 
-     &  WRITE(IOUT,'(/A10,50A20)') 
+     &  WRITE(IOUT,'(/A10,50A16)') 
      &             '  NODE    ',(CFLOWTYPE(IFL),IFL=1,NFLOWTYPE)
 C
 C--READ BOUNDARY AND OTHER FLOW TERMS
         DO N=1,NNODES
           IF(IFTLFMT.EQ.0) THEN
-            READ(INUF) (PKGFLOWS(IFL,N),IFL=1,NFLOWTYPE)
+            IF(m_readDbl.EQ.2) THEN
+              READ(INUF)(arrDbl(IFL,N),IFL=1,NFLOWTYPE)
+              DO IFL=1,NFLOWTYPE                                  
+                PKGFLOWS(IFL,N)=REAL(arrDbl(IFL,N))
+              END DO                 
+            ELSE
+              READ(INUF) (PKGFLOWS(IFL,N),IFL=1,NFLOWTYPE)
+            ENDIF
           ELSEIF(IFTLFMT.EQ.1) THEN
             READ(INUF,*) (PKGFLOWS(IFL,N),IFL=1,NFLOWTYPE)
           ENDIF
@@ -2400,8 +2622,15 @@ C
 C--READ NODE-TO-NODE INFO
         DO N=1,NRCHCON
           IF(IFTLFMT.EQ.0) THEN
-            READ(INUF) INOD1(N),INOD2(N),IDISP(N),
-     1                 QN2N(N),QAREA(N)
+            IF(m_readDbl.EQ.2) THEN
+              READ(INUF) INOD1(N),INOD2(N),IDISP(N),
+     &                   dbl1,dbl2        
+              QN2N(N)=REAL(dbl1)
+              QAREA(N)=REAL(dbl2)
+            ELSE
+              READ(INUF) INOD1(N),INOD2(N),IDISP(N),
+     1                   QN2N(N),QAREA(N)
+            ENDIF
           ELSEIF(IFTLFMT.EQ.1) THEN
             READ(INUF,*) INOD1(N),INOD2(N),IDISP(N),
      1                   QN2N(N),QAREA(N)
@@ -2438,6 +2667,9 @@ C--PRINT FORMATS
    51 FORMAT(I10,100(1X,G19.7))
    52 FORMAT(3I5,1X,G14.7,1X,G14.7)
 C
+C--DEALLOCATE TEMPORARY ARRAY FOR READING FTL VALUES IN DOUBLE PRECISION FORMAT
+      IF(ALLOCATED(arrDbl))  DEALLOCATE(arrDbl)
+C
       RETURN
       END
 C
@@ -2449,6 +2681,7 @@ C THIS SUBROUTINE READS FLOWS BETWEEN TWO DIFFERENT PACKAGES: PKG1 PKG2
 C FLOW IS POSITIVE IF FLOW IS FROM PKG1 TO PKG2
 C *********************************************************************
 C
+      USE FLOWFILE
       USE MT3DMS_MODULE, ONLY: IFTLFMT
       IMPLICIT  NONE
       INTEGER   KSTP,KPER,INUF,IOUT,KKSTP,KKPER,NPKG2PKG
@@ -2457,6 +2690,7 @@ C
       INTEGER, DIMENSION(:), POINTER :: INOD1,INOD2
       REAL,    DIMENSION(:), POINTER :: QN1N2
       INTEGER,      ALLOCATABLE      :: IP2PFLG(:)
+      REAL*8                         :: dbl
 C
 C--WRITE IDENTIFYING INFORMATION
       WRITE(IOUT,1) TEXT,KSTP,KPER,INUF
@@ -2489,7 +2723,12 @@ C
 C--READ FLOW RATES
       DO N=1,NPKG2PKG
         IF(IFTLFMT.EQ.0) THEN
-          READ(INUF) INOD1(N),INOD2(N),QN1N2(N),IP2PFLG(N)
+          IF(m_readDbl.EQ.2) THEN
+            READ(INUF) INOD1(N),INOD2(N),dbl,IP2PFLG(N)
+            QN1N2(N)=REAL(dbl)
+          ELSE
+            READ(INUF) INOD1(N),INOD2(N),QN1N2(N),IP2PFLG(N)
+          ENDIF
         ELSEIF(IFTLFMT.EQ.1) THEN
           READ(INUF,*) INOD1(N),INOD2(N),QN1N2(N),IP2PFLG(N)
         ENDIF
@@ -2551,7 +2790,7 @@ C
 C
       REAL,         ALLOCATABLE      :: PKGFLOWS(:,:),QAREA(:),
      &                                  QN2N(:)
-      CHARACTER*20, ALLOCATABLE      :: CFLOWTYPE(:)
+      CHARACTER*16, ALLOCATABLE      :: CFLOWTYPE(:)
       INTEGER,      ALLOCATABLE      :: INOD1(:),INOD2(:),IDISP(:)
       INTEGER,      ALLOCATABLE      :: ICID(:)
       REAL,         ALLOCATABLE      :: QAUX(:)
