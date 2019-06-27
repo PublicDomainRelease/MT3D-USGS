@@ -26,6 +26,51 @@ nor the U.S. Government shall be held liable for any damages resulting from
 its authorized or unauthorized use.
 
 
+o Version 1.1.0 06/28/2019:
+  -------------------------
+
+  New functionality available with 1.1.0 includes support for simulating
+  transport with MODFLOW 6-generated flow-transport link files.  The new
+  functionality works with native MODFLOW 6 output and does not require a 
+  dedicated package (i.e., "LMT") to create an MT3D-USGS ready flow-transport
+  link file.  New source code files required for compiling MT3D-USGS ver 1.1.0
+  include: 
+  
+    - fmi1mf6.f
+    - mf6bud.f90
+    - mf6grb.f90
+  
+  Functionality included in mf6bud.f90 and mf6grb.f90 comes directly from
+  MODFLOW 6 source files with some minor modification. Please refer to the 
+  section titled "Notes on FT6 Option Starting with Version 1.1.0" in the 
+  input instructions document contained with the 'doc' folder of the 
+  distribution files for further instruction regarding the model input 
+  changes required to take advantage of this functionality.
+  
+
+  Bug Fixes:
+  
+    - Fixed floating-invalid error in SSM1OT (ssm1.f)
+    - Fixed wrongful reporting of mass lost to ET when the DRYCELL keyword
+      is used in BTN.  Occured when user specified non-zero value of CINACT
+
+  Other:
+    
+    - Added a comment to reflect that the ICBCSF flag is currently inactive
+      in sft1.f 
+    - Time interpolation added for TVD in adv1.f
+    - Changes to the github auto-testing framework suggested by Mike Toews
+      were adopted.
+  
+  Documentation:
+  
+    - Added new section to the input instructions describing how to invoke
+      reading of MODFLOW 6-generated link files for simulating transport 
+      with a structed MODFLOW 6 grid.
+    - Minor clean-up of LKT input instructions
+    - Corrected mis-statement in LMT8.pdf regarding how the LMT package
+      should be activated in the MODLFOW name file
+
 o Version 1.0.1 02/28/2019:
   -------------------------
   
